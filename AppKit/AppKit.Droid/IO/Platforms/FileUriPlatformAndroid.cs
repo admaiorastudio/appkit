@@ -4,7 +4,7 @@ namespace AdMaiora.AppKit.IO
 
     public class FileUriPlatformAndroid : IFileUriPlatform
     {
-        string IFileUriPlatform.GetAbsolutePath(StorageLocation location, string path)
+        public string GetAbsolutePath(StorageLocation location, string path)
         {
             switch (location)
             {
