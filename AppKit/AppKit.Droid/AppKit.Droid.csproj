@@ -78,9 +78,7 @@
   <ItemGroup>
     <AndroidResource Include="Resources\Values\Strings.xml" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="UI\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <ProjectReference Include="..\AppKit\AppKit.Core.csproj">
       <Project>{4bfcf973-085f-4542-af19-fac8b13e60c1}</Project>
