@@ -5,17 +5,17 @@
     using System.Threading;
     using System.Threading.Tasks;
 
-    public class Utility
+    public class Executor
     {
         #region Constants and Fields
 
-        private IUtilityPlatform _utility;
+        private IExecutorPlatform _utility;
 
         #endregion
 
         #region Constructors
 
-        public Utility(IUtilityPlatform utilityPlatform)
+        public Executor(IExecutorPlatform utilityPlatform)
         {
             _utility = utilityPlatform;
         }

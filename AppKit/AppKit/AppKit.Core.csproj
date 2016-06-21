@@ -31,8 +31,8 @@
     <ConsolePause>false</ConsolePause>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Utils\Platforms\IUtilityPlatform.cs" />
-    <Compile Include="Utils\Utility.cs" />
+    <Compile Include="Utils\Platforms\IExecutorPlatform.cs" />
+    <Compile Include="Utils\Executor.cs" />
     <Compile Include="Data\DataStorage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\ServiceClient.cs" />

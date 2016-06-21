@@ -6,7 +6,7 @@
     using System.Text;
     using System.Threading.Tasks;
 
-    public interface IUtilityPlatform
+    public interface IExecutorPlatform
     {
         void OpenPhoneCall(string phoneNumber);
 

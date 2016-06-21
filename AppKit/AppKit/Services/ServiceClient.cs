@@ -50,6 +50,9 @@
 
         private double _defaultRequestTimeout;
 
+        private string _accessToken;
+        private DateTime _accessTokenExpirationDate;
+
         #endregion
 
         #region Constructors
@@ -99,9 +102,29 @@
             }
         }
 
+        public bool IsAccessTokenValid
+        {
+            get
+            {
+                if (String.IsNullOrWhiteSpace(_accessToken))
+                    return false;
+
+                if (_accessTokenExpirationDate < DateTime.Now)
+                    return false;
+
+                return true;
+            }
+        }
+
         #endregion
 
         #region Public Methods
+
+        public void RefreshAccessToken(string accessToken, DateTime expirationDate)
+        {
+            _accessToken = accessToken;
+            _accessTokenExpirationDate = expirationDate;
+        }
 
         public RestClient GetRestClient()
         {
