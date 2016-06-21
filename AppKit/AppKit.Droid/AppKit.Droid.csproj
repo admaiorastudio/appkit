@@ -66,6 +66,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="IO\FileUriExtensions.cs" />
+    <Compile Include="IO\Platforms\FileUriPlatformAndroid.cs" />
     <Compile Include="Resources\Resource.Designer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -78,6 +80,12 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="UI\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AppKit\AppKit.Core.csproj">
+      <Project>{4bfcf973-085f-4542-af19-fac8b13e60c1}</Project>
+      <Name>AppKit.Core</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

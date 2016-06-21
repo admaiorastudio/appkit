@@ -64,10 +64,18 @@
     <Folder Include="UI\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="IO\FileUriExtension.cs" />
+    <Compile Include="IO\Platforms\FileUriPlatformiOS.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AppKit\AppKit.Core.csproj">
+      <Project>{4bfcf973-085f-4542-af19-fac8b13e60c1}</Project>
+      <Name>AppKit.Core</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\iOS\Xamarin.iOS.CSharp.targets" />
 </Project>
