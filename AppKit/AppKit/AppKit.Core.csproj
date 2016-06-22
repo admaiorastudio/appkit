@@ -33,6 +33,7 @@
   <ItemGroup>
     <Compile Include="Data\Platforms\IUserSettingsPlatform.cs" />
     <Compile Include="Data\UserSettings.cs" />
+    <Compile Include="Extensions\EnumExtension.cs" />
     <Compile Include="IO\FileSystem.cs" />
     <Compile Include="IO\FileUri.cs" />
     <Compile Include="IO\FolderUri.cs" />
