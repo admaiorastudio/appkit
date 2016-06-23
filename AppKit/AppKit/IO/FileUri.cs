@@ -20,15 +20,13 @@
         protected StorageLocation _location;
 
         protected string _absolutePath;
-        protected string _relativePath;
-
-        private IFileUriPlatform _fileSystem;
+        protected string _relativePath;        
 
         #endregion
 
         #region Constructors and Destructors
 
-        public FileUri(string uri)
+        internal FileUri(IFileSystemPlatform fileSystemPlatform, string uri)
         {
             _uri = uri;
             if (_uri == "/")
@@ -62,11 +60,11 @@
                 throw new InvalidOperationException("The URI you provide is invalid.");
 
             _relativePath = _uri.Substring(_root.Length, _uri.Length - _root.Length);
-            _absolutePath = _fileSystem.GetAbsolutePath(Location, _relativePath);
+            _absolutePath = fileSystemPlatform.GetAbsolutePath(Location, _relativePath);
         }
 
-        public FileUri(string path, StorageLocation location)
-            : this(String.Concat(location.ToString().ToLower(), "://", path))
+        internal FileUri(IFileSystemPlatform fileSystemPlatform, string path, StorageLocation location)
+            : this(fileSystemPlatform, String.Concat(location.ToString().ToLower(), "://", path))
         {
 
         }

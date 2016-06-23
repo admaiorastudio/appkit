@@ -30,7 +30,7 @@
         Inheritable
     }
 
-    public class FileHelper
+    public class FileSystem
     {
         #region Fields
 
@@ -40,7 +40,7 @@
 
         #region Constructor
 
-        public FileHelper(IFileSystemPlatform fileSystemPlatform)
+        public FileSystem(IFileSystemPlatform fileSystemPlatform)
         {
             _fileSystemPlatform = fileSystemPlatform;
         }
@@ -48,6 +48,26 @@
         #endregion
 
         #region Public Methods
+
+        public FileUri CreateFileUri(string uri)
+        {
+            return new FileUri(_fileSystemPlatform, uri);
+        }
+
+        public FileUri CreateFileUri(string path, StorageLocation location)
+        {
+            return new FileUri(_fileSystemPlatform, path, location);
+        }
+
+        public FolderUri CreateFolderUri(string uri)
+        {
+            return new FolderUri(_fileSystemPlatform, uri);
+        }
+
+        public FolderUri CreateFolderUri(string path, StorageLocation location)
+        {
+            return new FolderUri(_fileSystemPlatform, path, location);
+        }
 
         public ulong GetAvailableDiskSpace(FolderUri uri)
         {

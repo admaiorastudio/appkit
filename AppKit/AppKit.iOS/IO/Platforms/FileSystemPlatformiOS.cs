@@ -1,5 +1,6 @@
 namespace AdMaiora.AppKit.IO
 {
+    using System;
     using System.IO;
 
     using Foundation;
@@ -66,6 +67,21 @@ namespace AdMaiora.AppKit.IO
         public Stream OpenFile(FileUri uri, UniversalFileMode mode, UniversalFileAccess access, UniversalFileShare share)
         {
             return File.Open(uri.AbsolutePath, (FileMode)mode, (FileAccess)access, (FileShare)share);
+        }
+
+        public string GetAbsolutePath(StorageLocation location, string path)
+        {
+            switch (location)
+            {
+                case StorageLocation.Bundle:
+                    return NSBundle.MainBundle.PathForResource(path.Substring(0, path.Length - 4), Path.GetExtension(path));
+                case StorageLocation.Internal:
+                    return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), path);
+                case StorageLocation.External:
+                    return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), path);
+            }
+
+            return null;
         }
     }
 }

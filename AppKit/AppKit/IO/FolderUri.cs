@@ -7,13 +7,13 @@
     {
         #region Constructors and Destructors
 
-        public FolderUri(string uri)
-            : base(StripFileName(uri))
+        internal FolderUri(IFileSystemPlatform fileSystemPlatform, string uri)
+            : base(fileSystemPlatform, StripFileName(uri))
         {
         }
 
-        public FolderUri(string path, StorageLocation location)
-            : this(String.Concat(location.ToString().ToLower(), "://", path))
+        internal FolderUri(IFileSystemPlatform fileSystemPlatform, string path, StorageLocation location)
+            : this(fileSystemPlatform, String.Concat(location.ToString().ToLower(), "://", path))
         {
         }
 
