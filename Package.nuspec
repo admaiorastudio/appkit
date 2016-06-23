@@ -2,15 +2,17 @@
 <package >
   <metadata>
     <id>AdMaiora.AppKit</id>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
 	<title>AdMaiora AppKit for Xamarin (PCL)</title>
-    <authors>AdMaiora</authors>
-    <owners>AdMaiora</owners>
+    <authors>Ad Maiora Studio</authors>
+    <owners>Ad Maiora Studio</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>First AdMaiora SDK NuGet</description>
-    <releaseNotes>First release.</releaseNotes>
-    <copyright>Copyright 2016</copyright>
-    <tags>AdMaiora AppKit pcl Xamarin</tags>
+    <description>App accelerator pack to bring common functionality easy with Xamarin</description>
+    <releaseNotes>First release</releaseNotes>
+    <copyright>Copyright Ad Maiora Studio ©  2016</copyright>
+	<projectUrl>https://github.com/admaiorastudio/appkit</projectUrl>
+	<iconUrl>http://www.admaiorastudio.com/img/logo.png</iconUrl>
+    <tags>AdMaiora AppKit PCL Xamarin</tags>
     <dependencies>
 	  <dependency id="SQLite.Net-PCL" version="3.1.1" />
 	  <dependency id="FubarCoder.RestSharp.Portable" version="3.3.0" />
