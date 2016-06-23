@@ -6,7 +6,7 @@ namespace AdMaiora.AppKit.Utils
     using MessageUI;
     using UIKit;
 
-    class ExecutorPlatformiOS : IExecutorPlatform
+    public class ExecutorPlatformiOS : IExecutorPlatform
     {
         public void DebugOutput(string tag, string format, params object[] args)
         {

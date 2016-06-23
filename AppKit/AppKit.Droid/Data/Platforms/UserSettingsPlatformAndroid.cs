@@ -4,7 +4,7 @@ namespace AdMaiora.AppKit.Data
 
     using Android.Content;
 
-    class UserSettingsPlatformAndroid : IUserSettingsPlatform
+    public class UserSettingsPlatformAndroid : IUserSettingsPlatform
     {
         public bool GetBoolValue(string key)
         {

@@ -4,7 +4,7 @@ namespace AdMaiora.AppKit.Data
 
     using Foundation;
 
-    class UserSettingsPlatformiOS : IUserSettingsPlatform
+    public class UserSettingsPlatformiOS : IUserSettingsPlatform
     {
         public bool GetBoolValue(string key)
         {
