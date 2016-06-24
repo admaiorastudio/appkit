@@ -38,6 +38,8 @@
     <Compile Include="IO\FileUri.cs" />
     <Compile Include="IO\FolderUri.cs" />
     <Compile Include="IO\Platforms\IFileSystemPlatform.cs" />
+    <Compile Include="Localization\Localizator.cs" />
+    <Compile Include="Localization\Platforms\ILocalizatorPlatform.cs" />
     <Compile Include="Utils\Logger.cs" />
     <Compile Include="Utils\Platforms\IExecutorPlatform.cs" />
     <Compile Include="Utils\Executor.cs" />

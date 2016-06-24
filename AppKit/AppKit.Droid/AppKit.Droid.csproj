@@ -69,6 +69,7 @@
     <Compile Include="Data\Platforms\UserSettingsPlatformAndroid.cs" />
     <Compile Include="IO\FileUriExtensions.cs" />
     <Compile Include="IO\Platforms\FileSystemPlatformAndroid.cs" />
+    <Compile Include="Localization\Platform\LocalizatorPlatformAndroid.cs" />
     <Compile Include="Resources\Resource.Designer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utils\Platforms\ExecutorPlatformAndroid.cs" />
