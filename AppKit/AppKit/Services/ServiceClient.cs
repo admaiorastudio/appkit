@@ -49,9 +49,12 @@
         private string _baseUrl;
 
         private double _defaultRequestTimeout;
+        private string _defaultAccessTokenName;
 
         private string _accessToken;
-        private DateTime _accessTokenExpirationDate;
+        private DateTime? _accessTokenExpirationDate;
+
+        private bool _handleHttpErrors;
 
         #endregion
 
@@ -61,6 +64,7 @@
         {
             _baseUrl = baseUrl;
             _defaultRequestTimeout = 5;
+            _defaultAccessTokenName = "Access-Token";
         }
 
         #endregion
@@ -102,6 +106,18 @@
             }
         }
 
+        public string DefaultAccessTokenName
+        {
+            get
+            {
+                return _defaultAccessTokenName;
+            }
+            set
+            {
+                _defaultAccessTokenName = value;
+            }
+        }
+
         public bool IsAccessTokenValid
         {
             get
@@ -109,11 +125,24 @@
                 if (String.IsNullOrWhiteSpace(_accessToken))
                     return false;
 
-                if (_accessTokenExpirationDate < DateTime.Now)
+                if (_accessTokenExpirationDate.GetValueOrDefault(DateTime.MinValue) <= DateTime.Now)
                     return false;
 
                 return true;
             }
+        }
+
+        public bool HandleHttpErrors
+        {
+            get
+            {
+                return _handleHttpErrors;
+            }
+            set
+            {
+                _handleHttpErrors = value;
+            }
+
         }
 
         #endregion
@@ -126,9 +155,16 @@
             _accessTokenExpirationDate = expirationDate;
         }
 
+        public void InvalidateAccessToken()
+        {
+            _accessToken = null;
+            _accessTokenExpirationDate = null;
+        }
+
         public RestClient GetRestClient()
         {
             RestClient client = new RestClient(this.BaseUrl);
+            client.IgnoreResponseStatusCode = !_handleHttpErrors;
             client.Timeout = TimeSpan.FromSeconds(_defaultRequestTimeout);
 
             return client;
@@ -137,6 +173,9 @@
         public RestRequest GetRestRequest(Method method, string resource, RequestContentType ct = RequestContentType.ApplicationJson, object parameters = null)
         {
             RestRequest request = new RestRequest(resource, method);
+
+            if (this.IsAccessTokenValid)
+                request.AddHeader(_defaultAccessTokenName, _accessToken);
 
             switch(ct)
             {
@@ -162,14 +201,19 @@
                     // Set parameters
                     if(parameters != null)
                     {
-                        request.AddBody(parameters);
+                        if(request.Method == Method.GET)
+                        {
+                            foreach (var p in GetParameters(parameters))
+                                request.AddParameter(p.Name, p.Value);
+                        }
+                        else
+                        {
+                            request.AddBody(parameters);
+                        }                        
                     }
 
                     break;
             }            
-
-            // Needed because windows phone cache the requests
-            request.AddParameter("No-Cache", DateTime.UtcNow.ToString(), ParameterType.QueryString);
             
             return request;
         }

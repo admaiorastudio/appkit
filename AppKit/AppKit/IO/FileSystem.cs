@@ -32,13 +32,13 @@
 
     public class FileSystem
     {
-        #region Fields
+        #region Constants & Fields
 
         protected IFileSystemPlatform _fileSystemPlatform;
 
         #endregion
 
-        #region Constructor
+        #region Constructors
 
         public FileSystem(IFileSystemPlatform fileSystemPlatform)
         {

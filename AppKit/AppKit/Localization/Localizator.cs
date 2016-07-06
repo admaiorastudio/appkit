@@ -47,30 +47,11 @@
 
         #endregion
 
-        #region Properties
-
-        public string Name
-        {
-            get;
-            set;
-        }
-
-        public string Language
-        {
-            get;
-            private set;
-        }
-
-        #endregion
-
         #region Constructors
 
-        public LocalizationDictionary(string name, string language)
+        public LocalizationDictionary()
         {
             _dictionary = new Dictionary<string, string>();
-
-            this.Name = name;
-            this.Language = language;
         }
 
         #endregion
