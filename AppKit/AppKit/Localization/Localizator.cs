@@ -108,6 +108,8 @@
 
         private LocalizationDictionary _dictionary;
 
+        private ILocalizatorPlatform _localizatorPlatform;
+
         #endregion
 
         #region Indexers
@@ -146,11 +148,13 @@
 
         public Localizator(ILocalizatorPlatform localizatorPlatform, string culture = null)
         {
-            _culture = string.IsNullOrWhiteSpace(culture) ? localizatorPlatform.GetDeviceCulture() : culture;
+            _localizatorPlatform = localizatorPlatform;
+
+            _culture = string.IsNullOrWhiteSpace(culture) ? _localizatorPlatform.GetDeviceCulture() : culture;
 
             Type type = null;
 
-            foreach (var a in localizatorPlatform.GetAssemblies())
+            foreach (var a in _localizatorPlatform.GetAssemblies())
             {
                 foreach (var t in a.DefinedTypes)
                 {

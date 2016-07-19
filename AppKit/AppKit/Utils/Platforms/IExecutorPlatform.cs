@@ -6,6 +6,7 @@
     using System.Text;
     using System.Threading.Tasks;
 
+    using AdMaiora.AppKit.IO;
     public interface IExecutorPlatform
     {
         void OpenPhoneCall(string phoneNumber);
@@ -14,7 +15,7 @@
 
         void OpenStore(string appId = null);
 
-        void SendEmail(string[] toRecipients, string subject);
+        void SendEmail(string[] toRecipients, string subject, string text = null, FileUri[] attachments = null);
 
         void ExecuteOnMainThread(object context, Action action);
 

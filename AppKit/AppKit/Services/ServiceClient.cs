@@ -7,6 +7,7 @@
     using System.Threading.Tasks;
     using System.Threading;
     using System.Reflection;
+    using System.Diagnostics;
 
     using RestSharp.Portable;
     using RestSharp.Portable.HttpClient;
@@ -20,7 +21,11 @@
         /// <summary>
         /// This means application/json
         /// </summary>
-        ApplicationJson
+        ApplicationJson,
+        /// <summary>
+        /// This means multipart/form-data, this allow file uploads BUT you can send form parameters only
+        /// </summary>
+        MultipartFormData
     }
 
     public class ServiceClient
@@ -48,8 +53,9 @@
 
         private string _baseUrl;
 
-        private double _defaultRequestTimeout;
-        private string _defaultAccessTokenName;
+        private double _requestTimeout;
+        private string _accessTokenName;
+        private string _multipartJsonField;
 
         private string _accessToken;
         private DateTime? _accessTokenExpirationDate;
@@ -63,8 +69,9 @@
         public ServiceClient(string baseUrl)
         {
             _baseUrl = baseUrl;
-            _defaultRequestTimeout = 5;
-            _defaultAccessTokenName = "Access-Token";
+            _requestTimeout = 5;
+            _accessTokenName = "Authorization";
+            _multipartJsonField = "json_body";
         }
 
         #endregion
@@ -93,28 +100,40 @@
             }
         }
 
-        public double DefaultRequestTimeout
+        public double RequestTimeout
         {
             get
             {
-                return _defaultRequestTimeout;
+                return _requestTimeout;
             }
             set
             {
                 // No less then 5 seconds
-                _defaultRequestTimeout = Math.Max(value, 5);
+                _requestTimeout = Math.Max(value, 5);
             }
         }
 
-        public string DefaultAccessTokenName
+        public string AccessTokenName
         {
             get
             {
-                return _defaultAccessTokenName;
+                return _accessTokenName;
             }
             set
             {
-                _defaultAccessTokenName = value;
+                _accessTokenName = value;
+            }
+        }
+
+        public string MultipartJsonField
+        {
+            get
+            {
+                return _multipartJsonField;
+            }
+            set
+            {
+                _multipartJsonField = value;
             }
         }
 
@@ -165,7 +184,7 @@
         {
             RestClient client = new RestClient(this.BaseUrl);
             client.IgnoreResponseStatusCode = !_handleHttpErrors;
-            client.Timeout = TimeSpan.FromSeconds(_defaultRequestTimeout);
+            client.Timeout = TimeSpan.FromSeconds(_requestTimeout);
 
             return client;
         }
@@ -175,7 +194,7 @@
             RestRequest request = new RestRequest(resource, method);
 
             if (this.IsAccessTokenValid)
-                request.AddHeader(_defaultAccessTokenName, _accessToken);
+                request.AddHeader(_accessTokenName, _accessToken);
 
             switch(ct)
             {
@@ -213,6 +232,19 @@
                     }
 
                     break;
+
+                case RequestContentType.MultipartFormData:
+
+                    // We do not specify any any content type header
+                    // letting RestSharp decide what to use
+
+                    // We add parameters as a single object parameter
+                    // letting RestSharp to do the right JSON serialization
+                    if (parameters != null)                                            
+                        request.AddParameter(_multipartJsonField, parameters, ParameterType.RequestBody, "application/json");                    
+
+                    break;
+
             }            
             
             return request;

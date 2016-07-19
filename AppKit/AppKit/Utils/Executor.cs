@@ -5,11 +5,13 @@
     using System.Threading;
     using System.Threading.Tasks;
 
+    using AdMaiora.AppKit.IO;
+
     public class Executor
     {
         #region Constants and Fields
 
-        private IExecutorPlatform _utility;
+        private IExecutorPlatform _executorPlatform;
 
         #endregion
 
@@ -17,7 +19,7 @@
 
         public Executor(IExecutorPlatform utilityPlatform)
         {
-            _utility = utilityPlatform;
+            _executorPlatform = utilityPlatform;
         }
 
         #endregion
@@ -27,27 +29,27 @@
         public void OpenPhoneCall(string phoneNumber)
         {
             phoneNumber = phoneNumber.Replace(" ", String.Empty);
-            _utility.OpenPhoneCall(phoneNumber);
+            _executorPlatform.OpenPhoneCall(phoneNumber);
         }
 
         public void OpenBrowser(string url)
         {
-            _utility.OpenBrowser(url);
+            _executorPlatform.OpenBrowser(url);
         }
 
         public void OpenStore(string appId = null)
         {
-            _utility.OpenStore(appId);
+            _executorPlatform.OpenStore(appId);
         }
 
-        public void SendEmail(string[] toRecipients, string subject)
+        public void SendEmail(string[] toRecipients, string subject, string text = null, FileUri[] attachments = null)
         {
-            _utility.SendEmail(toRecipients, subject);
+            _executorPlatform.SendEmail(toRecipients, subject, text, attachments);
         }
 
         public void ExecuteOnMainThread(object context, Action action)
         {
-            _utility.ExecuteOnMainThread(context, action);
+            _executorPlatform.ExecuteOnMainThread(context, action);
         }
 
         public void ExecuteOnMainThread(Action action)
@@ -240,12 +242,12 @@
         
         public void GetContextInfo(out string osVersion, out string appVersion, out string build)
         {
-            _utility.GetContextInfo(out osVersion, out appVersion, out build);
+            _executorPlatform.GetContextInfo(out osVersion, out appVersion, out build);
         }
 
         public void DebugOutput(string tag, string format, params object[] args)
         {
-            _utility.DebugOutput(tag, format, args);
+            _executorPlatform.DebugOutput(tag, format, args);
         }
 
         public void DebugOutput(string message)

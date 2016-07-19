@@ -9,29 +9,85 @@
     public class Logger
     {
         #region Constants and Fields
+                       
+        private ILoggerPlatform _loggerPlatform;
 
-        public static string LogTag = String.Empty;
-        public static FileUri LogPath = null;
+        private FileSystem _fileSystem;
 
-        public static bool EchoInConsole = false;
+        private FileUri _logUri;
+        private string _logTag;
 
         // Max log file size in Byte
-        private static ulong LogMaxSize = 4 * 1024 * 1024;
+        private ulong _maxLogSize;
 
         private string _locker = "_lock_";
 
-        private ILoggerPlatform _loggerPlatform;
-        private IFileSystemPlatform _fileSystemPlatform;
+        #endregion
+
+        #region Constructors
+
+        public Logger(ILoggerPlatform loggerPlatform)
+        {
+            _loggerPlatform = loggerPlatform;
+            _fileSystem = loggerPlatform.GetFileSystem();
+
+            _logTag = "APPKIT";
+
+            // Default is 4 mb
+            _maxLogSize = 4 * 1024 * 1024;
+        }
 
         #endregion
 
-        #region Construcor
+        #region Properties
 
-        public Logger(IFileSystemPlatform fileSystemPlatform, ILoggerPlatform loggerPlatform)
+        public FileUri LogUri
         {
-            _fileSystemPlatform = fileSystemPlatform;
-            _loggerPlatform = loggerPlatform;
+            get
+            {
+                if (_logUri == null)
+                    throw new InvalidOperationException("You must set a valid log file uri.");
+
+                return _logUri;
+            }
+            set
+            {
+                _logUri = value;
+            }
         }
+
+        public string LogTag
+        {
+            get
+            {
+                return _logTag;
+            }
+            set
+            {
+                _logTag = value;
+            }
+
+        }
+
+        public ulong MaxLogsize
+        {
+            get
+            {
+                return _maxLogSize;
+            }
+            set
+            {
+                ulong minSize = (1 * 1024 * 1024) / 2;
+                _maxLogSize = Math.Max(minSize, value);
+            }
+        }
+
+        public bool EchoInConsole
+        {
+            get;
+            set;
+        }
+
 
         #endregion
 
@@ -62,17 +118,14 @@
 
             lock (_locker)
             {
-                if (Logger.LogPath == null)
-                    throw new InvalidOperationException("Unable to log. Define a log path first!");
-
-                FileUri logFileUri = Logger.LogPath;
-                if (_fileSystemPlatform.FileExists(logFileUri))
+                FileUri logFileUri = this.LogUri;
+                if (_fileSystem.FileExists(logFileUri))
                 {
-                    if (_fileSystemPlatform.GetFileSize(logFileUri) > LogMaxSize)
-                        _fileSystemPlatform.DeleteFile(logFileUri);
+                    if (_fileSystem.GetFileSize(logFileUri) > this.MaxLogsize)
+                        _fileSystem.DeleteFile(logFileUri);
                 }
 
-                using (Stream stream = _fileSystemPlatform.OpenFile(logFileUri, UniversalFileMode.Append, UniversalFileAccess.Write, UniversalFileShare.None))
+                using (Stream stream = _fileSystem.OpenFile(logFileUri, UniversalFileMode.Append, UniversalFileAccess.Write, UniversalFileShare.None))
                 {
                     using (StreamWriter sw = new StreamWriter(stream))
                     {
@@ -91,7 +144,7 @@
                         sw.WriteLine(sb.ToString());
 
 #if DEBUG
-                        if(Logger.EchoInConsole)
+                        if(this.EchoInConsole)
                             _loggerPlatform.ConsoleWriteLine(tag, message);
 #endif
                     }

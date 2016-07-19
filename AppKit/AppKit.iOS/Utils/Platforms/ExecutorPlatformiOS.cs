@@ -1,10 +1,16 @@
 namespace AdMaiora.AppKit.Utils
 {
     using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.IO;
 
     using Foundation;
+    using CoreFoundation;
     using MessageUI;
     using UIKit;
+
+    using AdMaiora.AppKit.IO;
 
     public class ExecutorPlatformiOS : IExecutorPlatform
     {
@@ -42,20 +48,35 @@ namespace AdMaiora.AppKit.Utils
             UIApplication.SharedApplication.OpenUrl(NSUrl.FromString(iTunesLink));
         }
 
-        public void SendEmail(string[] toRecipients, string subject)
+        public void SendEmail(string[] toRecipients, string subject, string text = null, FileUri[] attachments = null)
         {
-            if (MFMailComposeViewController.CanSendMail)
+            if (!MFMailComposeViewController.CanSendMail)
+                throw new InvalidOperationException("System can not send email.");
+            
+            MFMailComposeViewController mailController = new MFMailComposeViewController();
+            mailController.SetToRecipients(toRecipients);
+            mailController.SetSubject(subject);
+            mailController.SetMessageBody(text, false);                                                                      
+            mailController.Finished += (sender, e) => ((UIViewController)sender).DismissViewController(true, null);
+
+            if (attachments != null
+                && attachments.Length > 0)
             {
-                MFMailComposeViewController mailController = new MFMailComposeViewController();
-                mailController.SetSubject(subject);
-                mailController.SetToRecipients(toRecipients);
-                mailController.Finished += (sender, e) => ((UIViewController)sender).DismissViewController(true, null);
-                UIApplication.SharedApplication.Windows[0].RootViewController.PresentViewController(mailController, true, null);
+                attachments
+                    .ToList()
+                    .ForEach(a =>
+                    {
+                        mailController.AddAttachmentData(
+                            NSData.FromUrl(a.ToNSUrl()),
+                            "application/octet-stream",
+                            Path.GetFileName(a.AbsolutePath));
+                    });                    
             }
-            else
-            {
-                // Notify the user?
-            }
+
+            UIApplication.SharedApplication
+                .Windows[0]
+                .RootViewController
+                .PresentViewController(mailController, true, null);
         }
     }
 }

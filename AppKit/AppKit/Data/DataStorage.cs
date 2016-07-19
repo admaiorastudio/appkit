@@ -9,12 +9,15 @@
     using SQLite.Net;
     using SQLite.Net.Interop;
 
+    using AdMaiora.AppKit.IO;
+
     public class DataStorage
     {
         #region Constants and Fields
 
         private ISQLitePlatform _sqlitePlatform;
-        private string _storageFilePath;
+
+        private FileUri _storageUri;
 
         private bool _isTransaction;
         private SQLiteConnection _sqlConnection;
@@ -25,16 +28,16 @@
 
         #region Constructors
 
-        public DataStorage(ISQLitePlatform sqlitePlatform, string storageFilePath)
-            : this(sqlitePlatform, storageFilePath, false)
+        public DataStorage(ISQLitePlatform sqlitePlatform, FileUri storageUri)
+            : this(sqlitePlatform, storageUri, false)
         {
         }
 
-        private DataStorage(ISQLitePlatform sqlitePlatform, string storageFilePath, bool isTransaction)
+        private DataStorage(ISQLitePlatform sqlitePlatform, FileUri storageUri, bool isTransaction)
         {
             _sqlitePlatform = sqlitePlatform;
 
-            _storageFilePath = storageFilePath;
+            _storageUri = storageUri;
             _isTransaction = isTransaction;
         }
 
@@ -42,18 +45,18 @@
 
         #region Properties
 
-        public string StorageFilePath
+        public FileUri StorageUri
         {
             get
             {
-                if (String.IsNullOrWhiteSpace(_storageFilePath))
-                    throw new InvalidOperationException("You must set a valid storage file path.");
+                if (_storageUri == null)
+                    throw new InvalidOperationException("You must set a valid storage file uri.");
 
-                return _storageFilePath;
+                return _storageUri;
             }
             set
             {
-                _storageFilePath = value;
+                _storageUri = value;
             }
         }
 
@@ -182,7 +185,7 @@
         {
             lock (_lock)
             {
-                DataStorage transaction = new DataStorage(_sqlitePlatform, _storageFilePath, true);
+                DataStorage transaction = new DataStorage(_sqlitePlatform, _storageUri, true);
 
                 if (action != null)
                 {
@@ -213,6 +216,11 @@
         public void RunInTransaction(Action<DataStorage> action)
         {
             RunInTransaction(CancellationToken.None, action);
+        }
+
+        public SQLiteCommand CreateCommand(string sqlCommand, params object[] args)
+        {
+            return GetSqlConnection().CreateCommand(sqlCommand, args);
         }
 
         public void ExecuteNonQueryCommand(SQLiteCommand cmd)
@@ -286,7 +294,7 @@
         private SQLiteConnection GetSqlConnection()
         {
             if (_sqlConnection == null)
-                _sqlConnection = new SQLiteConnection(_sqlitePlatform, this.StorageFilePath, false);
+                _sqlConnection = new SQLiteConnection(_sqlitePlatform, this.StorageUri.AbsolutePath, false);
 
             return _sqlConnection;
         }

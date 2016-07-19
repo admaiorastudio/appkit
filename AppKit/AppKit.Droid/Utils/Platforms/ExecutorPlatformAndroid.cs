@@ -1,9 +1,13 @@
 namespace AdMaiora.AppKit.Utils
 {
     using System;
+    using System.Collections.Generic;
+    using System.Linq;
 
     using Android.App;
     using Android.Content;
+
+    using AdMaiora.AppKit.IO;
 
     public class ExecutorPlatformAndroid : IExecutorPlatform
     {
@@ -106,23 +110,25 @@ namespace AdMaiora.AppKit.Utils
             }
         }
 
-        public void SendEmail(string[] toRecipients, string subject)
+        public void SendEmail(string[] toRecipients, string subject, string text = null, FileUri[] attachments = null)
         {
             Intent intent = new Intent(Intent.ActionSend);
             intent.SetType("message/rfc822");
             intent.PutExtra(Intent.ExtraEmail, toRecipients);
             intent.PutExtra(Intent.ExtraSubject, subject);
+            intent.PutExtra(Intent.ExtraText, text);
 
-            try
+            if (attachments != null
+                && attachments.Length > 0)
             {
-                Intent chooser = Intent.CreateChooser(intent, "Invio e-mail");
-                chooser.SetFlags(ActivityFlags.NewTask);
-                Application.Context.StartActivity(chooser);
+                var files = new List<Android.Net.Uri>();
+                files.AddRange(attachments.Select(a => a.ToUri()));
+                intent.PutParcelableArrayListExtra(Intent.ExtraStream, (IList<Android.OS.IParcelable>)files.ToArray());
             }
-            catch (Exception ex)
-            {
-                /* Do Nothing */
-            }
+
+            Intent chooser = Intent.CreateChooser(intent, "Invio e-mail");
+            chooser.SetFlags(ActivityFlags.NewTask);
+            Application.Context.StartActivity(chooser);
         }
     }
 }

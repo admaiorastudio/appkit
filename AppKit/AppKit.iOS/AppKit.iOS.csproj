@@ -67,11 +67,13 @@
     <Compile Include="IO\FileUriExtension.cs" />
     <Compile Include="IO\Platforms\FileSystemPlatformiOS.cs" />
     <Compile Include="Localization\Platform\LocaizatorPlatformiOS.cs" />
+    <Compile Include="Utils\Platforms\ImageLoaderPlatofrmiOS.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utils\Platforms\ExecutorPlatformiOS.cs" />
     <Compile Include="Utils\Platforms\LoggerPlatformiOS.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
