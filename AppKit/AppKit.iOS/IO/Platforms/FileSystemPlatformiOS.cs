@@ -50,13 +50,11 @@ namespace AdMaiora.AppKit.IO
 
         public ulong GetFileSize(FileUri uri)
         {
-            if (FileExists(uri))
-            {
-                FileInfo fi = new FileInfo(uri.AbsolutePath);
-                return (ulong)fi.Length;
-            }
-
-            return 0;
+            if (!FileExists(uri))
+                return 0;
+            
+            FileInfo fi = new FileInfo(uri.AbsolutePath);
+            return (ulong)fi.Length;
         }
 
         public void MoveFile(FileUri sourceUri, FileUri destinationUri)
@@ -82,6 +80,27 @@ namespace AdMaiora.AppKit.IO
             }
 
             return null;
+        }
+
+        public UniversalFileInfo GetFileInfo(FileUri uri)
+        {
+            if (!FileExists(uri))
+                throw new InvalidOperationException("File doesn't exists.");
+
+            FileInfo fi = new FileInfo(uri.AbsolutePath);
+            return new UniversalFileInfo
+            {
+                CreationTime = fi.CreationTime,
+                LastAccessTime = fi.LastAccessTime,
+                LastWriteTime = fi.LastWriteTime,
+                Length = (ulong)fi.Length
+            };
+        }
+
+        public string[] GetFolderFiles(FolderUri uri, string searchPattern, bool recursive)
+        {
+            return 
+                Directory.GetFiles(uri.AbsolutePath, searchPattern, recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
         }
     }
 }

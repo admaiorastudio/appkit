@@ -41,6 +41,7 @@
     <Compile Include="IO\Platforms\IFileSystemPlatform.cs" />
     <Compile Include="Localization\Localizator.cs" />
     <Compile Include="Localization\Platforms\ILocalizatorPlatform.cs" />
+    <Compile Include="Services\Platforms\IServiceClientPlatform.cs" />
     <Compile Include="Utils\ImageLoader.cs" />
     <Compile Include="Utils\Logger.cs" />
     <Compile Include="Utils\Platforms\IExecutorPlatform.cs" />

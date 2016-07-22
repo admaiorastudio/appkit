@@ -7,6 +7,7 @@
     using System.Threading.Tasks;
 
     using AdMaiora.AppKit.IO;
+
     public interface IExecutorPlatform
     {
         void OpenPhoneCall(string phoneNumber);

@@ -6,18 +6,18 @@ namespace AdMaiora.AppKit.Localization
 
     using AdMaiora.AppKit.IO;
 
-    using Java.Util;
+    using Foundation;
 
-    public class LocalizatorPlatformAndroid : ILocalizatorPlatform
+    public class LocaizatorPlatformiOS : ILocalizatorPlatform
     {
         public FileSystem GetFileSystem()
         {
-            return new FileSystem(new FileSystemPlatformAndroid());
+            return new FileSystem(new FileSystemPlatformiOS());
         }
 
         public string GetDeviceUICulture()
         {
-            return Locale.Default.ToString().Replace('_', '-');            
+            return NSLocale.PreferredLanguages[0];            
         }
 
         public CultureInfo[] GetInstalledCultures()

@@ -6,6 +6,10 @@
     using System.Globalization;
     using System.Text;
     using System.Reflection;
+    using System.Xml.Linq;
+    using System.IO;
+
+    using AdMaiora.AppKit.IO;
 
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
     public class LocalizationDictionaryAttribute : Attribute
@@ -56,6 +60,18 @@
 
         #endregion
 
+        #region Properties
+
+        internal Dictionary<string, string> Entries
+        {
+            get
+            {
+                return _dictionary;
+            }
+        }
+
+        #endregion
+
         #region Public Methods
 
         public string GetValue(string key)
@@ -63,7 +79,7 @@
             string value = key;
             _dictionary.TryGetValue(key, out value);
 
-            return value ?? key;
+            return value ?? String.Format("[{0}]", key);
         }
 
         public LocalizationDictionary AddValue(string key, string value)
@@ -82,7 +98,7 @@
                 sb.AppendLine(String.Format("{0}|{1}", kvp.Key, kvp.Value));
 
             return sb.ToString();
-        }
+        }        
 
         #endregion
     }
@@ -105,6 +121,9 @@
         #region Constants and Fields
 
         private string _culture;
+
+        private CultureInfo _language;
+        private CultureInfo _region;
 
         private LocalizationDictionary _dictionary;
 
@@ -134,6 +153,22 @@
             }
         }
 
+        public CultureInfo LanguageCulture
+        {
+            get
+            {
+                return _language;
+            }
+        }
+
+        public CultureInfo RegionalCulture
+        {
+            get
+            {
+                return _region;
+            }
+        }
+
         public LocalizationDictionary Dictionary
         {
             get
@@ -149,11 +184,36 @@
         public Localizator(ILocalizatorPlatform localizatorPlatform, string culture = null)
         {
             _localizatorPlatform = localizatorPlatform;
+            _culture = string.IsNullOrWhiteSpace(culture) ? _localizatorPlatform.GetDeviceUICulture() : culture;
 
-            _culture = string.IsNullOrWhiteSpace(culture) ? _localizatorPlatform.GetDeviceCulture() : culture;
+            try
+            {                
+                _language = new CultureInfo(_culture);
+                _region = new CultureInfo(_culture);
+            }
+            catch
+            {
+                // Something wrong here, usually it could be that the SO 
+                // return a combined value for (country-region) like it-US 
+                // that means country language IT and region formats US
+                // In iOS user can specify customized country-region combination                
 
-            Type type = null;
+                // We need to get the "nearest" culture info for language and region
 
+                CultureInfo[] allCultures = _localizatorPlatform.GetInstalledCultures();
+
+                _language = allCultures.FirstOrDefault(ci => ci.TwoLetterISOLanguageName == _culture.Substring(0, 2));
+                if (_language == null)
+                    _language = CultureInfo.CurrentCulture;
+
+                _region = allCultures.FirstOrDefault(ci => ci.Name.EndsWith(_culture.Substring(3, 2)));
+                if (_region == null)
+                    _region = CultureInfo.CurrentUICulture;
+            }
+
+            // Fetch all available localized dictionaries by culture
+            Type defaultLocalizedDictionaryType = null;
+            Dictionary<string, Type> localizedDictionaries = new Dictionary<string, Type>();            
             foreach (var a in _localizatorPlatform.GetAssemblies())
             {
                 foreach (var t in a.DefinedTypes)
@@ -164,32 +224,41 @@
                             .GetCustomAttributes(typeof(LocalizationDictionaryAttribute), true)
                             .FirstOrDefault();
 
-                        if (pa.TargetCulture == _culture || (type == null && pa.IsDefault))
-                            type = t.AsType();
+                        if (pa != null)
+                        {
+                            localizedDictionaries.Add(pa.TargetCulture, t.AsType());
+
+                            if (pa.IsDefault)
+                                defaultLocalizedDictionaryType = t.AsType();
+                        }
                     }
                 }
             }
-
-            if (type == null)
+            
+            // Try get localized dictionary type by designated culture
+            Type localizedDictionaryType = null;
+            localizedDictionaries.TryGetValue(_culture, out localizedDictionaryType);
+            if (localizedDictionaryType == null)
             {
-                throw new Exception("Missing LocalizationDictionary Attribute");
+                // Try get localized dictionary type by nearest culture
+                foreach(var kvp in localizedDictionaries)
+                {
+                    string targetCulture = kvp.Key;
+                    if(targetCulture.StartsWith(_culture.Substring(0, 2)))
+                    {
+                        localizedDictionaryType = kvp.Value;
+                        break;
+                    }
+                }                
             }
 
-            _dictionary = (LocalizationDictionary)Activator.CreateInstance(type);
+            _dictionary = 
+                (LocalizationDictionary)Activator.CreateInstance(localizedDictionaryType ?? defaultLocalizedDictionaryType);
         }
 
         #endregion
 
         #region Public Static Methods
-
-        public static string GetLanguageCode(string culture)
-        {
-            if (String.IsNullOrWhiteSpace(culture))
-                return null;
-
-            var c = culture.Split('-');
-            return c[c.Length - 1];
-        }
 
         #endregion
 
@@ -205,19 +274,88 @@
             return String.Format(GetString(key), args);
         }
 
-        public string FormatCurrency(decimal value, string culture = null)
+        public string FormatCurrency(decimal value)
         {
-            return value.ToString("C2", new CultureInfo(culture ?? _culture));
+            return value.ToString("C2", _region);
         }
 
-        public string FormatDate(DateTime value, string culture = null)
+        public string FormatDate(DateTime value, string format)
         {
-            return value.ToString("d", new CultureInfo(culture ?? _culture));
+            return value.ToString(format, _region);
         }
 
-        public string FormatTime(DateTime value, string culture = null)
+        public string FormatShortDate(DateTime value)
         {
-            return value.ToString("t", new CultureInfo(culture ?? _culture));
+            return value.ToString("d", _region);
+        }
+
+        public string FormatShortDateAndTime(DateTime value)
+        {
+            return value.ToString("g", _region);
+        }
+
+        public string FormatLongDate(DateTime value)
+        {
+            return value.ToString("D", _region);
+        }
+
+        public string FormatLongDateAndTime(DateTime value)
+        {
+            return value.ToString("f", _region);
+        }
+
+        public string FormatTime(DateTime value)
+        {
+            return value.ToString("t", _region);
+        }
+
+        public void GenerateXmlDictionaries(FolderUri outputUri)
+        {
+            var fs = _localizatorPlatform.GetFileSystem();
+            if (!fs.FolderExists(outputUri))
+                fs.CreateFolder(outputUri);
+
+            foreach (var a in _localizatorPlatform.GetAssemblies())
+            {
+                foreach (var t in a.DefinedTypes)
+                {
+                    if (t.BaseType == typeof(LocalizationDictionary))
+                    {
+                        var pa = (LocalizationDictionaryAttribute)t
+                            .GetCustomAttributes(typeof(LocalizationDictionaryAttribute), true)
+                            .FirstOrDefault();
+
+                        if (pa != null)
+                        {
+                            var dictionary =
+                                (LocalizationDictionary)Activator.CreateInstance(t.AsType());
+
+                            XDocument xdoc = new XDocument(
+                                new XDeclaration("1.0", "UTF-8", "yes"),
+                                new XElement("dictionary",
+                                    new XAttribute("targetCulture", pa.TargetCulture),
+                                    new XElement("entries",
+                                        dictionary.Entries.Select(
+                                            kvp =>
+                                            {
+                                                return new XElement("entry",
+                                                    new XElement("key", kvp.Key),
+                                                    new XElement("value", kvp.Value));
+                                            })
+                                            .ToArray())));
+
+                            string dictionaryPath = String.Concat(Path.Combine(outputUri.Uri, pa.TargetCulture), ".xml");
+                            FileUri dictionaryUri = _localizatorPlatform.GetFileSystem().CreateFileUri(dictionaryPath);
+                            if (fs.FileExists(dictionaryUri))
+                                fs.DeleteFile(dictionaryUri);
+
+                            using (Stream s = fs.OpenFile(dictionaryUri, UniversalFileMode.CreateNew, UniversalFileAccess.Write))
+                                xdoc.Save(s);
+                        }
+                    }
+                }
+            }
+
         }
 
         #endregion

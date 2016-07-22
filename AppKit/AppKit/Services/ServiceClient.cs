@@ -51,6 +51,8 @@
 
         #region Constants and Fields
 
+        private IServiceClientPlatform _servicePlatform;
+
         private string _baseUrl;
 
         private double _requestTimeout;
@@ -66,9 +68,12 @@
 
         #region Constructors
 
-        public ServiceClient(string baseUrl)
+        public ServiceClient(IServiceClientPlatform servicePlatform, string baseUrl)
         {
+            _servicePlatform = servicePlatform;
+
             _baseUrl = baseUrl;
+
             _requestTimeout = 5;
             _accessTokenName = "Authorization";
             _multipartJsonField = "json_body";
@@ -137,6 +142,27 @@
             }
         }
 
+        public bool HandleHttpErrors
+        {
+            get
+            {
+                return _handleHttpErrors;
+            }
+            set
+            {
+                _handleHttpErrors = value;
+            }
+
+        }
+
+        public NetworkConnection NetworkConnection
+        {
+            get
+            {
+                return _servicePlatform.GetNetworkConnection();
+            }
+        }
+
         public bool IsAccessTokenValid
         {
             get
@@ -151,17 +177,12 @@
             }
         }
 
-        public bool HandleHttpErrors
+        public bool IsNetworkAvailable
         {
             get
             {
-                return _handleHttpErrors;
+                return _servicePlatform.IsNetworkAvailable();
             }
-            set
-            {
-                _handleHttpErrors = value;
-            }
-
         }
 
         #endregion

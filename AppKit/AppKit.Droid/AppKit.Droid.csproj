@@ -72,6 +72,7 @@
     <Compile Include="Localization\Platform\LocalizatorPlatformAndroid.cs" />
     <Compile Include="Resources\Resource.Designer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Services\Platforms\ServiceClientPlatformAndroid.cs" />
     <Compile Include="Utils\Platforms\ExecutorPlatformAndroid.cs" />
     <Compile Include="Utils\Platforms\ImageLoaderPlatformAndroid.cs" />
     <Compile Include="Utils\Platforms\LoggerPlatformAndroid.cs" />

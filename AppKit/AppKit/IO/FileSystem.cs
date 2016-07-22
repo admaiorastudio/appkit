@@ -2,6 +2,8 @@
 {
     using System;
     using System.IO;
+    using System.Collections.Generic;
+    using System.Linq;
 
     public enum UniversalFileMode
     {
@@ -28,6 +30,33 @@
         ReadWrite,
         Delete,
         Inheritable
+    }
+
+    public class UniversalFileInfo
+    {
+        public DateTime CreationTime
+        {
+            get;
+            set;
+        }
+
+        public DateTime LastAccessTime
+        {
+            get;
+            set;
+        }
+
+        public DateTime LastWriteTime
+        {
+            get;
+            set;
+        }
+
+        public ulong Length
+        {
+            get;
+            set;
+        }
     }
 
     public class FileSystem
@@ -79,6 +108,11 @@
             return _fileSystemPlatform.GetFileSize(uri);
         }
 
+        public UniversalFileInfo GetFileInfo(FileUri uri)
+        {
+            return _fileSystemPlatform.GetFileInfo(uri);
+        }
+
         public bool FolderExists(FolderUri uri)
         {
             return _fileSystemPlatform.FolderExists(uri);
@@ -98,6 +132,19 @@
                 throw new InvalidOperationException("Unable to delete folder inside the bundle.");
 
             _fileSystemPlatform.DeleteFolder(uri);
+        }
+
+        public FileUri[] GetFolderFiles(FolderUri uri, string searchPattern, bool recursive)
+        {
+            string[] filePaths = _fileSystemPlatform.GetFolderFiles(uri, searchPattern, recursive);
+            if (filePaths == null)
+                return null;
+
+            List<FileUri> fileUris = filePaths
+                .Select(x => CreateFileUri(Path.Combine(uri.Uri, x.Replace(uri.AbsolutePath + "/", String.Empty))))
+                .ToList();
+
+            return fileUris.ToArray();
         }
 
         public bool FileExists(FileUri uri)
