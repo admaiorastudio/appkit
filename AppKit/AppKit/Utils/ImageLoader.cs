@@ -34,7 +34,7 @@ namespace AdMaiora.AppKit.Utils
 
         private readonly LRUCache<string, object> _cache;
 
-        private readonly List<string> _downloading;
+        private List<string> _downloading;   
 
         #endregion
 
@@ -50,6 +50,8 @@ namespace AdMaiora.AppKit.Utils
 
             _cacheMaxSize = Math.Max(10, cacheMaxSize);
             _cache = new LRUCache<string, object>(_cacheMaxSize);
+
+            _downloading = new List<string>();
         }
 
         #endregion
@@ -91,7 +93,8 @@ namespace AdMaiora.AppKit.Utils
         {       
             if (!_fileSystem.FileExists(imageUri))
                 return;
-                         
+            
+
             bool isChanged = RegisterSetImageForView(_loaderPlatform.GetViewId(imageView, ref _nextImageViewId), imageUri.AbsolutePath);
             if (!isChanged
                 && _loaderPlatform.GetImageViewHasContent(imageView))
@@ -101,11 +104,9 @@ namespace AdMaiora.AppKit.Utils
 
             if (hideWhileLoading)
             {
-                //imageView.Hidden = true;
                 _loaderPlatform.SetViewIsVisible(imageView, false);
 
                 if (loaderView != null)
-                    //loaderView.Hidden = false;
                     _loaderPlatform.SetViewIsVisible(loaderView, true);
             }
 
@@ -117,40 +118,58 @@ namespace AdMaiora.AppKit.Utils
                 (image) =>
                 {
                     if (IsSetLastRequested(_loaderPlatform.GetViewId(imageView, ref _nextImageViewId), imageUri.AbsolutePath))
-                    {
-                        //imageView.Image = image;
+                    {                        
                         _loaderPlatform.SetImageViewContent(imageView, image);
                         if (hideWhileLoading)
-                            //imageView.Hidden = false;
                             _loaderPlatform.SetViewIsVisible(imageView, true);
 
                         if (loaderView != null)
-                            //loaderView.Hidden = true;
                             _loaderPlatform.SetViewIsVisible(loaderView, false);
                     }
                 },
-                () =>
+                (error) =>
                 {
                     // Do nothing?
+                    System.Diagnostics.Debug.WriteLine(error);
                 });
         }
 
         public void SetImageForView(Uri uri, FileUri noImageUri, object imageView, object loaderView = null, int rotation = 0, bool hideWhileLoading = true)
-        {
+        {            
+            SetImageForView(noImageUri, imageView);
+
             DownlodImage(uri,
                 // Success
-                (imageUri) => SetImageForView(imageUri, imageView, loaderView, rotation, hideWhileLoading),
+                (imageUri) =>
+                {
+                    if (IsSetLastRequested(_loaderPlatform.GetViewId(imageView, ref _nextImageViewId), imageUri.AbsolutePath))
+                            SetImageForView(imageUri, imageView, loaderView, rotation, hideWhileLoading);
+                },
                 // Error
-                () => SetImageForView(noImageUri, imageView));                                
+                (imageUri) =>
+                {
+                    if (IsSetLastRequested(_loaderPlatform.GetViewId(imageView, ref _nextImageViewId), imageUri.AbsolutePath))
+                            SetImageForView(noImageUri, imageView);
+                });     
         }
 
         public void SetImageForView(Uri uri, string noImageName, object imageView, object loaderView = null, int rotation = 0, bool hideWhileLoading = true)
-        {
+        {            
+            SetImageForView(noImageName, imageView);
+
             DownlodImage(uri,
                 // Success
-                (imageUri) => SetImageForView(imageUri, imageView, loaderView, rotation, hideWhileLoading),
+                (imageUri) =>
+                {
+                    if (IsSetLastRequested(_loaderPlatform.GetViewId(imageView, ref _nextImageViewId), imageUri.AbsolutePath))
+                            SetImageForView(imageUri, imageView, loaderView, rotation, hideWhileLoading);
+                },
                 // Error
-                () => SetImageForView(noImageName, imageView));
+                (imageUri) =>
+                {
+                    if (IsSetLastRequested(_loaderPlatform.GetViewId(imageView, ref _nextImageViewId), imageUri.AbsolutePath))
+                            SetImageForView(noImageName, imageView);
+                });
         }
 
         public void SetImageForView(string imageName, object imageView)
@@ -191,61 +210,73 @@ namespace AdMaiora.AppKit.Utils
 
         #region Methods
 
-        private async Task LoadImage(FileUri uri, int targetWidth, int targetHeight, int rotation, Action<object> success, Action error)
+        private async Task LoadImage(FileUri uri, int targetWidth, int targetHeight, int rotation, Action<object> success, Action<string> error)
         {
-            object image = _cache.Get(uri.AbsolutePath);
-            if (image == null)
+            try
             {
-                image = await (new TaskFactory<object>()).StartNew(
-                    () => _loaderPlatform.GetImageFromUri(uri, targetWidth, targetHeight, rotation));
+                object image = _cache.Get(uri.AbsolutePath);
+                if (image == null)
+                {
+                    image = await (new TaskFactory<object>()).StartNew(
+                        () => _loaderPlatform.GetImageFromUri(uri, targetWidth, targetHeight, rotation));
 
-                object removed = null;
-                _cache.Add(uri.AbsolutePath, image, out removed);
-                if (removed != null)
-                    _loaderPlatform.ReleaseImage(removed);
-            }
+                    object removed = null;
+                    _cache.Add(uri.AbsolutePath, image, out removed);
+                    if (removed != null)
+                        _loaderPlatform.ReleaseImage(removed);
+                }
 
-            if (image != null)
-            {
-                if (success != null)
-                    success(image);
+                if (image != null)
+                {
+                    if (success != null)
+                        success(image);
+                }
+                else
+                {
+                    if (error != null)
+                        error("Unknown error!");
+                }
             }
-            else
+            catch(Exception ex)
             {
                 if (error != null)
-                    error();
+                    error(ex.ToString());
             }
         }
 
-        private async Task DownlodImage(Uri uri, Action<FileUri> success, Action error)
+        private async Task DownlodImage(Uri uri, Action<FileUri> success, Action<FileUri> error)
         {            
             if (!uri.IsWellFormedOriginalString())
                 return;
 
+            string path = Path.Combine(this.StorageUri.Uri, Path.GetFileName(uri.AbsoluteUri));
+            FileUri localUri = _fileSystem.CreateFileUri(path);
+
             try
-            {                
-                string path = Path.Combine(this.StorageUri.Uri, Path.GetFileName(uri.AbsoluteUri));
-                FileUri cacheFileUri = _fileSystem.CreateFileUri(path);
-                if (_fileSystem.FileExists(cacheFileUri))
+            {
+                if (_fileSystem.FileExists(localUri))
                 {
+                    System.Diagnostics.Debug.WriteLine("LOCAL FILE >>> " + uri.AbsolutePath);
                     if (success != null)
-                        success(cacheFileUri);
+                        success(localUri);                    
                 }
                 else
                 {
-                    if(_downloading.Contains(uri.AbsolutePath))
-                    {
-                        if (error != null)
-                            error();
+                    //if(_downloading.Contains(uri.AbsolutePath))
+                    //{
+                    //    if (error != null)
+                    //        error();
 
-                        return;
-                    }
+                    //    return;
+                    //}
 
                     string host = String.Concat(uri.Scheme, "://", uri.Host);
                     RestClient client = new RestClient(host);
-                    RestRequest request = new RestRequest(uri.AbsolutePath);
+                    client.Timeout = TimeSpan.FromSeconds(5);
+                    client.IgnoreResponseStatusCode = true;     
+                    RestRequest request = new RestRequest(uri.AbsolutePath);                    
 
-                    _downloading.Add(uri.AbsoluteUri);
+                    //_downloading.Add(uri.AbsoluteUri);
 
                     var response = await client.Execute(request);
                     if (response.StatusCode == HttpStatusCode.OK)
@@ -256,26 +287,26 @@ namespace AdMaiora.AppKit.Utils
                                 if (!_fileSystem.FolderExists(this.StorageUri))
                                     _fileSystem.CreateFolder(this.StorageUri);
 
-                                using (BinaryWriter w = new BinaryWriter(_fileSystem.OpenFile(cacheFileUri, UniversalFileMode.CreateNew, UniversalFileAccess.Write)))
+                                using (BinaryWriter w = new BinaryWriter(_fileSystem.OpenFile(localUri, UniversalFileMode.CreateNew, UniversalFileAccess.Write)))
                                     w.Write(response.RawBytes);
                             });
 
                         if (success != null)
-                            success(cacheFileUri);
+                            success(localUri);
                     }
                     else
                     {
                         if (error != null)
-                            error();
+                            error(localUri);
                     }
 
-                    _downloading.Remove(uri.AbsolutePath);
+                    //_downloading.Remove(uri.AbsolutePath);
                 }
             }
             catch (Exception ex)
             {
                 if (error != null)
-                    error();
+                    error(localUri);
             }
         }
 

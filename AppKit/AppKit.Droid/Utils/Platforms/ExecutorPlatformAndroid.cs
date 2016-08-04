@@ -112,7 +112,7 @@ namespace AdMaiora.AppKit.Utils
 
         public void SendEmail(string[] toRecipients, string subject, string text = null, FileUri[] attachments = null)
         {
-            Intent intent = new Intent(Intent.ActionSend);
+            Intent intent = new Intent(Intent.ActionSendMultiple);
             intent.SetType("message/rfc822");
             intent.PutExtra(Intent.ExtraEmail, toRecipients);
             intent.PutExtra(Intent.ExtraSubject, subject);

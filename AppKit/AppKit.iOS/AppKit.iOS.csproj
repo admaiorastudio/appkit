@@ -66,7 +66,7 @@
     <Compile Include="Data\Platforms\UserSettingsPlatformiOS.cs" />
     <Compile Include="IO\FileUriExtension.cs" />
     <Compile Include="IO\Platforms\FileSystemPlatformiOS.cs" />
-    <Compile Include="Localization\Platforms\LocaizatorPlatformiOS.cs" />
+    <Compile Include="Localization\Platforms\LocalizatorPlatformiOS.cs" />
     <Compile Include="Services\Platforms\ServiceClientPlatformiOS.cs" />
     <Compile Include="Utils\Platforms\ImageLoaderPlatofrmiOS.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

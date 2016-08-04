@@ -17,7 +17,7 @@
         private FileUri _logUri;
         private string _logTag;
 
-        // Max log file size in Byte
+        // Max log file size in Bytes
         private ulong _maxLogSize;
 
         private string _locker = "_lock_";
@@ -69,7 +69,7 @@
 
         }
 
-        public ulong MaxLogsize
+        public ulong MaxLogSize
         {
             get
             {
@@ -87,7 +87,6 @@
             get;
             set;
         }
-
 
         #endregion
 
@@ -121,7 +120,7 @@
                 FileUri logFileUri = this.LogUri;
                 if (_fileSystem.FileExists(logFileUri))
                 {
-                    if (_fileSystem.GetFileSize(logFileUri) > this.MaxLogsize)
+                    if (_fileSystem.GetFileSize(logFileUri) > this.MaxLogSize)
                         _fileSystem.DeleteFile(logFileUri);
                 }
 

@@ -68,8 +68,16 @@ namespace AdMaiora.AppKit.Utils
             if (iv == null)
                 return;
 
-            width = iv.Width;
-            height = iv.Height;
+            if (iv.Width != 0 && iv.Height != 0)
+            {
+                width  = iv.Width;
+                height = iv.Height;
+            }
+            else
+            {
+                width  = iv.LayoutParameters.Width;
+                height = iv.LayoutParameters.Height;
+            }
         }
 
         public bool GetImageViewHasContent(object imageView)

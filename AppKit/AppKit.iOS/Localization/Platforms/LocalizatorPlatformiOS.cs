@@ -8,7 +8,7 @@ namespace AdMaiora.AppKit.Localization
 
     using Foundation;
 
-    public class LocaizatorPlatformiOS : ILocalizatorPlatform
+    public class LocalizatorPlatformiOS : ILocalizatorPlatform
     {
         public FileSystem GetFileSystem()
         {

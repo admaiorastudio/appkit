@@ -82,7 +82,6 @@
     <None Include="packages.config" />
     <None Include="Resources\AboutResources.txt" />
   </ItemGroup>
-  <ItemGroup />
   <ItemGroup>
     <ProjectReference Include="..\AppKit\AppKit.Core.csproj">
       <Project>{4bfcf973-085f-4542-af19-fac8b13e60c1}</Project>
