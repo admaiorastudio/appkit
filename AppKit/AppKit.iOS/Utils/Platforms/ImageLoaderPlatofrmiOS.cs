@@ -69,7 +69,7 @@ namespace AdMaiora.AppKit.Utils
                 return;
 
             width = (int)iv.Frame.Width;
-            height = (int)iv.Frame.Height;            
+            height = (int)iv.Frame.Height;
         }
 
         public bool GetImageViewHasContent(object imageView)

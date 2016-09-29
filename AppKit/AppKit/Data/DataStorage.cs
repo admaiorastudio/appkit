@@ -5,9 +5,8 @@
     using System.Linq;
     using System.Linq.Expressions;
     using System.Threading;
-   
-    using SQLite.Net;
-    using SQLite.Net.Interop;
+
+    using SQLite;
 
     using AdMaiora.AppKit.IO;
 
@@ -15,7 +14,7 @@
     {
         #region Constants and Fields
 
-        private ISQLitePlatform _sqlitePlatform;
+        private IDataStoragePlatform _dataStoragePlatform;
 
         private FileUri _storageUri;
 
@@ -28,14 +27,14 @@
 
         #region Constructors
 
-        public DataStorage(ISQLitePlatform sqlitePlatform, FileUri storageUri)
-            : this(sqlitePlatform, storageUri, false)
+        public DataStorage(IDataStoragePlatform dataStoragePlatform, FileUri storageUri)
+            : this(dataStoragePlatform, storageUri, false)
         {
         }
 
-        private DataStorage(ISQLitePlatform sqlitePlatform, FileUri storageUri, bool isTransaction)
+        private DataStorage(IDataStoragePlatform dataStoragePlatform, FileUri storageUri, bool isTransaction)
         {
-            _sqlitePlatform = sqlitePlatform;
+            _dataStoragePlatform = dataStoragePlatform;
 
             _storageUri = storageUri;
             _isTransaction = isTransaction;
@@ -185,7 +184,7 @@
         {
             lock (_lock)
             {
-                DataStorage transaction = new DataStorage(_sqlitePlatform, _storageUri, true);
+                DataStorage transaction = new DataStorage(_dataStoragePlatform, _storageUri, true);
 
                 if (action != null)
                 {
@@ -275,26 +274,10 @@
             }
         }
 
-        private void EnsureTable(SQLiteConnection connection, Type type)
-        {
-            string tableName = type.Name;
-            var existingCols = connection.GetTableInfo(tableName);
-            if (existingCols.Count == 0)
-            {
-                connection.CreateTable(type);
-            }
-            else
-            {
-                // Do we need to update the schema? 
-                // This method will automatically check table schema against entity fields
-                connection.MigrateTable(type);
-            }
-        }
-
         private SQLiteConnection GetSqlConnection()
         {
             if (_sqlConnection == null)
-                _sqlConnection = new SQLiteConnection(_sqlitePlatform, this.StorageUri.AbsolutePath, false);
+                _sqlConnection = new SQLiteConnection(this.StorageUri.AbsolutePath, false);
 
             return _sqlConnection;
         }
@@ -321,6 +304,55 @@
             var connection = GetSqlConnection();
             if (_isTransaction)
                 connection.Rollback();
+        }
+
+        private void EnsureTable(SQLiteConnection connection, Type type)
+        {
+            string tableName = type.Name;
+            var existingCols = connection.GetTableInfo(tableName);
+            if (existingCols.Count == 0)
+            {
+                connection.CreateTable(type);
+            }
+            else
+            {
+                // Do we need to update the schema? 
+                // This method will automatically check table schema against entity fields
+                MigrateTable(connection, type);
+            }
+        }
+
+        private void MigrateTable(SQLiteConnection connection, Type ty)
+        {
+            var map = connection.GetMapping(ty);
+            var existingCols = connection.GetTableInfo(map.TableName);
+
+            var toBeAdded = new List<TableMapping.Column>();
+
+            foreach (var p in map.Columns)
+            {
+                var found = false;
+                foreach (var c in existingCols)
+                {
+                    found = (string.Compare(p.Name, c.Name, StringComparison.OrdinalIgnoreCase) == 0);
+                    if (found)
+                    {
+                        break;
+                    }
+                }
+                if (!found)
+                {
+                    toBeAdded.Add(p);
+                }
+            }
+
+            foreach (var p in toBeAdded)
+            {
+                var addCol = "alter table \"" + map.TableName + "\" add column " +
+                             Orm.SqlDecl(p, connection.StoreDateTimeAsTicks);
+
+                connection.Execute(addCol);
+            }
         }
 
         #endregion

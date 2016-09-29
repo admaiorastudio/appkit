@@ -6,8 +6,9 @@ namespace AdMaiora.AppKit.Utils
 
     using Android.App;
     using Android.Content;
+    using Android.OS;
 
-    using AdMaiora.AppKit.IO;
+    using AdMaiora.AppKit.IO;    
 
     public class ExecutorPlatformAndroid : IExecutorPlatform
     {
@@ -23,7 +24,7 @@ namespace AdMaiora.AppKit.Utils
             // Context may become invalid (null) when closing the current activity
             if (context == null)
             {
-                Android.Util.Log.Debug("Core", "Unable to invoke on main thread, context is null");
+                (new Handler(Looper.MainLooper)).Post(action);
             }
             else
             {

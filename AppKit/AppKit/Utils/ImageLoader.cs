@@ -9,7 +9,8 @@ namespace AdMaiora.AppKit.Utils
     using System.Net;    
     
     using AdMaiora.AppKit.IO;
-    using AdMaiora.AppKit.Data;     
+    using AdMaiora.AppKit.Data;
+    using AdMaiora.AppKit.Services;
     
     using RestSharp.Portable;
     using RestSharp.Portable.HttpClient;
@@ -17,13 +18,46 @@ namespace AdMaiora.AppKit.Utils
     #pragma warning disable CS4014
     public class ImageLoader
     {
+        #region Inner Classes
+
+        class DownloadSubscribtion
+        {
+            public Uri SourceUri
+            {
+                get;
+                private set;
+            }
+
+            public Action<FileUri> Success
+            {
+                get;
+                private set;
+            }
+
+            public Action<FileUri> Error
+            {
+                get;
+                private set;
+            }
+
+            public DownloadSubscribtion(Uri uri, Action<FileUri> success, Action<FileUri> error)
+            {
+                this.SourceUri = uri;
+                this.Success = success;
+                this.Error = error;
+            }
+        }
+
+        #endregion
+
         #region Constants and Fields
 
         private IImageLoaderPlatform _loaderPlatform;
 
         private FileSystem _fileSystem;
         private Executor _executor;
-      
+        private ServiceClient _authorizator;
+
         private int _cacheMaxSize;
 
         private FolderUri _storageUri;
@@ -34,7 +68,8 @@ namespace AdMaiora.AppKit.Utils
 
         private readonly LRUCache<string, object> _cache;
 
-        private List<string> _downloading;   
+        private List<string> _downloading;
+        private List<DownloadSubscribtion> _downloadedSubscriptions;
 
         #endregion
 
@@ -52,6 +87,7 @@ namespace AdMaiora.AppKit.Utils
             _cache = new LRUCache<string, object>(_cacheMaxSize);
 
             _downloading = new List<string>();
+            _downloadedSubscriptions = new List<DownloadSubscribtion>();
         }
 
         #endregion
@@ -86,15 +122,27 @@ namespace AdMaiora.AppKit.Utils
             }
         }
 
+        public ServiceClient Authorizator
+        {
+            get
+            {
+                return _authorizator;
+            }
+            set
+            {
+                _authorizator = value;       
+            }
+        }
+
         #endregion
 
         #region Public Methods
-        public void SetImageForView(FileUri imageUri, object imageView, object loaderView = null, int rotation = 0, bool hideWhileLoading = true)
+
+        public void SetImageForView(FileUri imageUri, object imageView, object loaderView = null, int rotation = 0, bool hideWhileLoading = true, Action<string> done = null)
         {       
             if (!_fileSystem.FileExists(imageUri))
                 return;
             
-
             bool isChanged = RegisterSetImageForView(_loaderPlatform.GetViewId(imageView, ref _nextImageViewId), imageUri.AbsolutePath);
             if (!isChanged
                 && _loaderPlatform.GetImageViewHasContent(imageView))
@@ -125,6 +173,8 @@ namespace AdMaiora.AppKit.Utils
 
                         if (loaderView != null)
                             _loaderPlatform.SetViewIsVisible(loaderView, false);
+
+                        done?.Invoke(imageUri.AbsolutePath);
                     }
                 },
                 (error) =>
@@ -134,7 +184,7 @@ namespace AdMaiora.AppKit.Utils
                 });
         }
 
-        public void SetImageForView(Uri uri, FileUri noImageUri, object imageView, object loaderView = null, int rotation = 0, bool hideWhileLoading = true)
+        public void SetImageForView(Uri uri, FileUri noImageUri, object imageView, object loaderView = null, int rotation = 0, bool hideWhileLoading = true, Action<string> done = null)
         {            
             SetImageForView(noImageUri, imageView);
 
@@ -143,7 +193,7 @@ namespace AdMaiora.AppKit.Utils
                 (imageUri) =>
                 {
                     if (IsSetLastRequested(_loaderPlatform.GetViewId(imageView, ref _nextImageViewId), imageUri.AbsolutePath))
-                            SetImageForView(imageUri, imageView, loaderView, rotation, hideWhileLoading);
+                            SetImageForView(imageUri, imageView, loaderView, rotation, hideWhileLoading, done);
                 },
                 // Error
                 (imageUri) =>
@@ -153,7 +203,7 @@ namespace AdMaiora.AppKit.Utils
                 });     
         }
 
-        public void SetImageForView(Uri uri, string noImageName, object imageView, object loaderView = null, int rotation = 0, bool hideWhileLoading = true)
+        public void SetImageForView(Uri uri, string noImageName, object imageView, object loaderView = null, int rotation = 0, bool hideWhileLoading = true, Action<string> done = null)
         {            
             SetImageForView(noImageName, imageView);
 
@@ -162,7 +212,7 @@ namespace AdMaiora.AppKit.Utils
                 (imageUri) =>
                 {
                     if (IsSetLastRequested(_loaderPlatform.GetViewId(imageView, ref _nextImageViewId), imageUri.AbsolutePath))
-                            SetImageForView(imageUri, imageView, loaderView, rotation, hideWhileLoading);
+                            SetImageForView(imageUri, imageView, loaderView, rotation, hideWhileLoading, done);                    
                 },
                 // Error
                 (imageUri) =>
@@ -262,22 +312,39 @@ namespace AdMaiora.AppKit.Utils
                 }
                 else
                 {
-                    //if(_downloading.Contains(uri.AbsolutePath))
-                    //{
-                    //    if (error != null)
-                    //        error();
+                    if (_downloading.Contains(uri.AbsoluteUri))
+                    {
+                        _downloadedSubscriptions.Add(new DownloadSubscribtion(uri, success, error));
+                        return;
+                    }                   
 
-                    //    return;
-                    //}
+                    _downloading.Add(uri.AbsoluteUri);
 
                     string host = String.Concat(uri.Scheme, "://", uri.Host);
-                    RestClient client = new RestClient(host);
-                    client.Timeout = TimeSpan.FromSeconds(5);
-                    client.IgnoreResponseStatusCode = true;     
-                    RestRequest request = new RestRequest(uri.AbsolutePath);                    
 
-                    //_downloading.Add(uri.AbsoluteUri);
+                    RestClient client = null;
+                    RestRequest request = null;
+                    if (_authorizator == null)
+                    {
+                        client = new RestClient(host);
+                        client.Timeout = TimeSpan.FromSeconds(5);
+                        client.IgnoreResponseStatusCode = true;
+                        request = new RestRequest(uri.AbsolutePath);
+                    }
+                    else
+                    {
+                        if(!_authorizator.IsAccessTokenValid)
+                        {
+                            if (error != null)
+                                error(localUri);
 
+                            return;
+                        }
+                            
+                        client = _authorizator.GetRestClient();
+                        request = _authorizator.GetRestRequest(uri.AbsolutePath, Method.GET);
+                    }
+                    
                     var response = await client.Execute(request);
                     if (response.StatusCode == HttpStatusCode.OK)
                     {
@@ -291,22 +358,20 @@ namespace AdMaiora.AppKit.Utils
                                     w.Write(response.RawBytes);
                             });
 
-                        if (success != null)
-                            success(localUri);
+                        success?.Invoke(localUri);
+                        NotifyDownloadSubscribers(uri, localUri, true);
                     }
                     else
                     {
-                        if (error != null)
-                            error(localUri);
+                        error?.Invoke(localUri);
+                        NotifyDownloadSubscribers(uri, localUri, false);
                     }
-
-                    //_downloading.Remove(uri.AbsolutePath);
                 }
             }
             catch (Exception ex)
             {
-                if (error != null)
-                    error(localUri);
+                error?.Invoke(localUri);
+                NotifyDownloadSubscribers(uri, localUri, false);
             }
         }
 
@@ -348,7 +413,29 @@ namespace AdMaiora.AppKit.Utils
                 return String.Compare(imagePath, path, StringComparison.OrdinalIgnoreCase) == 0;
             }
         }
-    
+
+        private void NotifyDownloadSubscribers(Uri sourceUri, FileUri localUri, bool success = true)
+        {
+            _downloading.Remove(sourceUri.AbsoluteUri);
+
+            var subscriptions = _downloadedSubscriptions
+                .Where(s => s.SourceUri.AbsoluteUri == sourceUri.AbsoluteUri)
+                .ToList();
+
+            if (subscriptions == null || subscriptions.Count == 0)
+                return;
+
+            foreach (var s in subscriptions)
+            {
+                if (success)               
+                    s.Success?.Invoke(localUri);                
+                else                
+                    s.Error?.Invoke(localUri);
+
+                _downloadedSubscriptions.Remove(s);
+            }
+        }
+
         #endregion
     }
 }

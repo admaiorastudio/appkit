@@ -28,6 +28,48 @@
         MultipartFormData
     }
 
+    public class TrackedRestRequest
+    {
+        #region Constructors
+
+        public TrackedRestRequest(RestRequest request, object payload)
+        {
+            this.Timer = new Stopwatch();
+            this.Parameters = payload;
+            this.Request = request;
+        }
+
+        #endregion
+
+        #region Properties
+
+        public Stopwatch Timer
+        {
+            get;
+            private set;
+        }
+
+        public object Parameters
+        {
+            get;
+            private set;
+        }
+
+        public RestRequest Request
+        {
+            get;
+            private set;
+        }
+
+        public IRestResponse Response
+        {
+            get;
+            set;
+        }
+
+        #endregion
+    }
+
     public class ServiceClient
     {
         #region Inner Classes
@@ -95,7 +137,7 @@
             set
             {
                 Uri uriResult;
-                if(!(Uri.TryCreate(value, UriKind.Absolute, out uriResult) 
+                if (!(Uri.TryCreate(value, UriKind.Absolute, out uriResult)
                     && (uriResult.Scheme.ToLower() == "http" || uriResult.Scheme.ToLower() == "https")))
                 {
                     throw new InvalidOperationException("You must set a valid base url. Only HTTP or HTTPS schemes are supported.");
@@ -118,6 +160,18 @@
             }
         }
 
+        public string AccessToken
+        {
+            get
+            {
+                return _accessToken;
+            }
+            set
+            {
+                _accessToken = value;
+            }
+        }
+
         public string AccessTokenName
         {
             get
@@ -127,6 +181,18 @@
             set
             {
                 _accessTokenName = value;
+            }
+        }
+
+        public DateTime? AccessTokenExpiration
+        {
+            get
+            {
+                return _accessTokenExpirationDate;
+            }
+            set
+            {
+                _accessTokenExpirationDate = value;
             }
         }
 
@@ -187,6 +253,148 @@
 
         #endregion
 
+        #region Request Methods
+
+        public async Task<IRestResponse> Request(string resource, Method method,
+            CancellationToken t = default(CancellationToken),
+            RequestContentType ct = RequestContentType.ApplicationJson,
+            object parameters = null)
+        {
+            return await Request(resource, method, t, null, null, ct, parameters);
+        }
+
+        public async Task<IRestResponse<T>> Request<T>(string resource, Method method,
+            CancellationToken t = default(CancellationToken),
+            RequestContentType ct = RequestContentType.ApplicationJson,
+            object parameters = null)
+        {
+            return await Request<T>(resource, method, t, null, null, ct, parameters);
+        }
+
+        public async Task<IRestResponse> Request(string resource, Method method,
+            CancellationToken t = default(CancellationToken),
+            Action<RestClient> configureClient = null,
+            Action<RestRequest> configureRequest = null,
+            RequestContentType ct = RequestContentType.ApplicationJson,
+            object parameters = null)
+        {
+            RestClient client = null;
+            RestRequest request = null;
+
+            await (new TaskFactory()).StartNew(
+                () =>
+                {
+                    client = GetRestClient();
+                    configureClient?.Invoke(client);
+
+                    request = GetRestRequest(resource, method, ct, parameters);
+                    configureRequest?.Invoke(request);
+
+                });
+
+            return await client.Execute(request, t);
+        }
+
+        public async Task<IRestResponse<T>> Request<T>(string resource, Method method,
+            CancellationToken t = default(CancellationToken),
+            Action<RestClient> configureClient = null,
+            Action<RestRequest> configureRequest = null,
+            RequestContentType ct = RequestContentType.ApplicationJson,
+            object parameters = null)
+        {
+            RestClient client = null;
+            RestRequest request = null;
+
+            await (new TaskFactory()).StartNew(
+                () =>
+                {
+                    client = GetRestClient();
+                    configureClient?.Invoke(client);
+
+                    request = GetRestRequest(resource, method, ct, parameters);
+                    configureRequest?.Invoke(request);
+
+                });
+
+
+            return await client.Execute<T>(request, t);
+        }
+
+        public async Task<IRestResponse> TrackedRequest(string resource, Method method, Action<TrackedRestRequest> track,
+            CancellationToken t = default(CancellationToken),
+            RequestContentType ct = RequestContentType.ApplicationJson,
+            object parameters = null)
+        {
+            return await TrackedRequest(resource, method, track, t, null, null, ct, parameters);
+        }
+
+        public async Task<IRestResponse<T>> TrackedRequest<T>(string resource, Method method, Action<TrackedRestRequest> track,
+            CancellationToken t = default(CancellationToken),
+            RequestContentType ct = RequestContentType.ApplicationJson,
+            object parameters = null)
+        {
+            return await TrackedRequest<T>(resource, method, track, t, null, null, ct, parameters);
+        }
+
+        public async Task<IRestResponse> TrackedRequest(string resource, Method method, Action<TrackedRestRequest> track,
+            CancellationToken t = default(CancellationToken),
+            Action<RestClient> configureClient = null,
+            Action<RestRequest> configureRequest = null,
+            RequestContentType ct = RequestContentType.ApplicationJson,
+            object parameters = null)
+        {
+            RestClient client = null;
+            RestRequest request = null;
+
+            await (new TaskFactory()).StartNew(
+                () =>
+                {
+                    client = GetRestClient();
+                    configureClient?.Invoke(client);
+
+                    request = GetRestRequest(resource, method, ct, parameters);
+                    configureRequest?.Invoke(request);
+
+                });
+
+            var trequest = new TrackedRestRequest(request, parameters);
+            var response = await client.Execute(trequest, t);
+            track?.Invoke(trequest);
+
+            return response;
+        }
+
+        public async Task<IRestResponse<T>> TrackedRequest<T>(string resource, Method method, Action<TrackedRestRequest> track,
+            CancellationToken t = default(CancellationToken),
+            Action<RestClient> configureClient = null,
+            Action<RestRequest> configureRequest = null,
+            RequestContentType ct = RequestContentType.ApplicationJson,
+            object parameters = null)
+        {
+            RestClient client = null;
+            RestRequest request = null;
+
+            await (new TaskFactory()).StartNew(
+                () =>
+                {
+                    client = GetRestClient();
+                    configureClient?.Invoke(client);
+
+                    request = GetRestRequest(resource, method, ct, parameters);
+                    configureRequest?.Invoke(request);
+
+                });
+
+
+            var trequest = new TrackedRestRequest(request, parameters);
+            var response = await client.Execute<T>(trequest, t);
+            track?.Invoke(trequest);
+
+            return response;
+        }
+
+        #endregion
+
         #region Public Methods
 
         public void RefreshAccessToken(string accessToken, DateTime expirationDate)
@@ -210,7 +418,7 @@
             return client;
         }
 
-        public RestRequest GetRestRequest(Method method, string resource, RequestContentType ct = RequestContentType.ApplicationJson, object parameters = null)
+        public RestRequest GetRestRequest(string resource, Method method, RequestContentType ct = RequestContentType.ApplicationJson, object parameters = null)
         {
             RestRequest request = new RestRequest(resource, method);
 
