@@ -8,7 +8,7 @@ namespace AdMaiora.AppKit.Services
 
     using SystemConfiguration;
 
-    public class ServiceClientiOSPlatform : IServiceClientPlatform
+    public class ServiceClientPlatformiOS : IServiceClientPlatform
     {
         public NetworkConnection GetNetworkConnection()
         {
