@@ -11,7 +11,7 @@
     <releaseNotes>First release</releaseNotes>
     <copyright>Copyright Ad Maiora Studio ©  2016</copyright>
 	<projectUrl>https://github.com/admaiorastudio/appkit</projectUrl>
-	<iconUrl>http://www.admaiorastudio.com/img/logo-nuget.png</iconUrl>
+	<iconUrl>http://www.admaiorastudio.com/wp-content/uploads/2016/10/logo-nuget.png</iconUrl>
     <tags>AdMaiora AppKit PCL Xamarin</tags>
     <dependencies>
 	  <group>
