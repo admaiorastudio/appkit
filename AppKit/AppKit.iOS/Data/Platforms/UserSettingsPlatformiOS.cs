@@ -35,7 +35,15 @@ namespace AdMaiora.AppKit.Data
 
         public void SetStringValue(string key, string value)
         {
-            NSUserDefaults.StandardUserDefaults.SetString(value, key);
+            if (value != null)
+            {
+                NSUserDefaults.StandardUserDefaults.SetString(value, key);
+            }
+            else
+            {
+                NSUserDefaults.StandardUserDefaults.RemoveObject(key);
+            }
+
             NSUserDefaults.StandardUserDefaults.Synchronize();
         }
     }

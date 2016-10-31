@@ -8,11 +8,28 @@ namespace AdMaiora.AppKit
     using Foundation;
     using UIKit;
 
-    public class UIAppKitApplicationDelegate : UIApplicationDelegate
+    using AdMaiora.AppKit.Data;
+    
+    public abstract class UIAppKitApplicationDelegate : UIApplicationDelegate
     {
         #region Properties
 
         public override UIWindow Window
+        {
+            get;
+            set;
+        }
+
+        public bool IsApplicationInForeground
+        {
+            get
+            {
+                return this.Window != null 
+                    && UIApplication.SharedApplication.ApplicationState == UIApplicationState.Active;
+            }
+        }
+
+        private bool IsRemoteNotificationLaunched
         {
             get;
             set;
@@ -36,7 +53,28 @@ namespace AdMaiora.AppKit
 
         #region Methods
 
-        protected void RegisterForRemoteNotifications()
+        protected bool RegisterMainLauncher(UIViewController mainViewController, NSDictionary launchOptions)
+        {
+            if (launchOptions != null
+                && launchOptions.ContainsKey(UIApplication.LaunchOptionsRemoteNotificationKey))
+            {
+                var userInfo = launchOptions.ObjectForKey(UIApplication.LaunchOptionsRemoteNotificationKey) as NSDictionary;
+                if (userInfo != null)
+                {
+                    ReceivedRemoteNotification(UIApplication.SharedApplication, launchOptions);
+                    if (this.IsRemoteNotificationLaunched)
+                        return true;                
+                }
+            }
+
+            this.Window = new UIWindow(UIScreen.MainScreen.Bounds);
+            this.Window.RootViewController = mainViewController;
+            this.Window.MakeKeyAndVisible();
+
+            return true;
+        }
+
+        protected void RegisterForRemoteNotifications(NSDictionary launchOptions)
         {
             if (UIDevice.CurrentDevice.CheckSystemVersion(8, 0))
             {
@@ -51,6 +89,22 @@ namespace AdMaiora.AppKit
             {
                 UIRemoteNotificationType notificationTypes = UIRemoteNotificationType.Alert | UIRemoteNotificationType.Badge | UIRemoteNotificationType.Sound;
                 UIApplication.SharedApplication.RegisterForRemoteNotificationTypes(notificationTypes);
+            }
+        }
+
+        protected void HandleRemoteNotificationLaunching(Action whenStarting, Action whenResuming)
+        {
+            this.IsRemoteNotificationLaunched = true;
+
+            // If Window is null, the app is restarting after the user
+            // has tapped the "Heads-up" notification
+            if (this.Window == null)
+            {
+                whenStarting?.Invoke();
+            }
+            else
+            {
+                whenResuming?.Invoke();                                
             }
         }
 
@@ -102,11 +156,23 @@ namespace AdMaiora.AppKit
                     // so keep that in mind.
                     if (aps.ContainsKey(new NSString("alert")))
                     {
-                        NSDictionary alert = aps.ObjectForKey(new NSString("alert")) as NSDictionary;
-                        if (alert != null)
+                        if(aps.ObjectForKey(new NSString("alert")) is NSString)
                         {
-                            values.Add("title", alert.ObjectForKey(new NSString("title")).ToString());
-                            values.Add("body", alert.ObjectForKey(new NSString("body")).ToString());
+                            var alert = aps.ObjectForKey(new NSString("alert")) as NSString;
+                            values.Add("title", null);
+                            values.Add("body", alert.ToString());
+                        }
+                        else if (aps.ObjectForKey(new NSString("alert")) is NSDictionary)
+                        {
+                            var alert = aps.ObjectForKey(new NSString("alert")) as NSDictionary;
+                            if (alert != null)
+                            {
+                                if (alert.ContainsKey(new NSString("title")))
+                                    values.Add("title", alert.ObjectForKey(new NSString("title")).ToString());
+
+                                if (alert.ContainsKey(new NSString("body")))
+                                    values.Add("body", alert.ObjectForKey(new NSString("body")).ToString());
+                            }
                         }
                     }
                 }
@@ -124,16 +190,29 @@ namespace AdMaiora.AppKit
 
                     if (data.ContainsKey(new NSString("payload")))
                     {
-                        NSDictionary target = data.ObjectForKey(new NSString("payload")) as NSDictionary;
-                        if (target != null)
+                        if (data.ObjectForKey(new NSString("payload")) is NSString)
                         {
-                            NSError error = null;
-                            NSData d = NSJsonSerialization.Serialize(target, NSJsonWritingOptions.PrettyPrinted, out error);
-                            NSString json = NSString.FromData(d, NSStringEncoding.UTF8);
-                            values.Add("payload", json.ToString());
+                            NSString payload = data.ObjectForKey(new NSString("payload")) as NSString;
+                            values.Add("payload", payload.ToString());
+                        }
+                        else if (data.ObjectForKey(new NSString("payload")) is NSDictionary)
+                        {
+                            NSDictionary target = data.ObjectForKey(new NSString("payload")) as NSDictionary;
+                            if (target != null)
+                            {
+                                NSError error = null;
+                                NSData d = NSJsonSerialization.Serialize(target, NSJsonWritingOptions.PrettyPrinted, out error);
+                                NSString json = NSString.FromData(d, NSStringEncoding.UTF8);
+                                values.Add("payload", json.ToString());
+                            }
                         }
                     }
                 }
+            }
+            else
+            {
+                values.Add("action", 0);
+                values.Add("payload", null);
             }
 
             return values;

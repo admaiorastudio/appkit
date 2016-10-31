@@ -16,7 +16,14 @@ namespace AdMaiora.AppKit.Utils
     {
         public void DebugOutput(string tag, string format, params object[] args)
         {
-            System.Diagnostics.Debug.WriteLine(String.Concat("[", tag, "] : ", format), args);
+            if (args == null || args.Length == 0)
+            {
+                System.Diagnostics.Debug.WriteLine(String.Concat("[", tag, "] : ", format));
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine(String.Concat("[", tag, "] : ", format), args);
+            }
         }
 
         public void ExecuteOnMainThread(object context, Action action)
