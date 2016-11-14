@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--Automatically generated-->
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Target Name="check_cpu_e3d541b4-8180-4c8a-95cf-22ced410cea9" BeforeTargets="ResolveAssemblyReferences" Condition=" ( ($(Platform.ToLower()) != 'arm') AND ($(Platform.ToLower()) != 'x86') ) ">
+    <Warning Text="$(Platform) is not supported. The Platform configuration must be arm or x86" />
+  </Target>
+  <Target Name="InjectReference_cc5adea2-5221-4661-a239-9153487fea4f" BeforeTargets="ResolveAssemblyReferences">
+    <!--SQLitePCLRaw.batteries_green.e_sqlite3.wp80.arm-->
+    <ItemGroup Condition=" '$(Platform.ToLower())' == 'arm' ">
+      <Reference Include="SQLitePCLRaw.batteries_green">
+        <HintPath>$(MSBuildThisFileDirectory)..\..\build\wp80\arm\\SQLitePCLRaw.batteries_green.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+    <!--SQLitePCLRaw.batteries_green.e_sqlite3.wp80.x86-->
+    <ItemGroup Condition=" '$(Platform.ToLower())' == 'x86' ">
+      <Reference Include="SQLitePCLRaw.batteries_green">
+        <HintPath>$(MSBuildThisFileDirectory)..\..\build\wp80\x86\\SQLitePCLRaw.batteries_green.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+  </Target>
+</Project>
