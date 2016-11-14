@@ -4,5 +4,6 @@
 
     public interface IDataStoragePlatform
     {
+        SQLitePCL.ISQLite3Provider GetSQLiteProvider();
     }
 }

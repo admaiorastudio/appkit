@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>AdMaiora.AppKit</id>
-    <version>1.0.6</version>
+    <version>1.0.7</version>
 	<title>AdMaiora AppKit for Xamarin (PCL)</title>
     <authors>Ad Maiora Studio</authors>
     <owners>Ad Maiora Studio</owners>
@@ -19,6 +19,8 @@
 	    <dependency id="FubarCoder.RestSharp.Portable" version="3.3.0" />
       </group>
 	  <group targetFramework="monoandroid60">	
+		<dependency id="sqlite-net-pcl" version="1.2.0" />
+		<dependency id="FubarCoder.RestSharp.Portable" version="3.3.0" />
 		<dependency id="Xamarin.GooglePlayServices.Gcm" version="29.0.0.1" />
 	  </group>
     </dependencies>

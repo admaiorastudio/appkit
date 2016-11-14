@@ -23,6 +23,8 @@
 
         private string _lock = "DatabaseLock";
 
+        private static bool NeedsInit = true;
+
         #endregion
 
         #region Constructors
@@ -37,7 +39,14 @@
             _dataStoragePlatform = dataStoragePlatform;
 
             _storageUri = storageUri;
-            _isTransaction = isTransaction;
+            _isTransaction = isTransaction; 
+            
+            if(DataStorage.NeedsInit)
+            {
+                DataStorage.NeedsInit = false;
+                SQLitePCL.Batteries.Init();
+                SQLitePCL.raw.SetProvider(_dataStoragePlatform.GetSQLiteProvider());
+            }           
         }
 
         #endregion
