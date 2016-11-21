@@ -11,17 +11,17 @@
 
     using RestSharp.Portable;
     using RestSharp.Portable.HttpClient;
-    
-    public enum RequestContentType
+
+    public enum ParametersHandling
     {
         /// <summary>
-        /// This means application/x-www-form-urlencoded
+        /// Will let Rest Sharp choose which is right for this kind of request
         /// </summary>
-        ApplicationForm,
+        Default,
         /// <summary>
-        /// This means application/json
+        /// Will add paremters as request body 
         /// </summary>
-        ApplicationJson,
+        Body,
         /// <summary>
         /// This means multipart/form-data, this allow file uploads BUT you can send form parameters only
         /// </summary>
@@ -257,25 +257,25 @@
 
         public async Task<IRestResponse> Request(string resource, Method method,
             CancellationToken t = default(CancellationToken),
-            RequestContentType ct = RequestContentType.ApplicationJson,
+            ParametersHandling ct = ParametersHandling.Default,
             object parameters = null)
         {
-            return await Request(resource, method, t, null, null, ct, parameters);
+            return await Request(resource, method, null, null, t, ct, parameters);
         }
 
         public async Task<IRestResponse<T>> Request<T>(string resource, Method method,
             CancellationToken t = default(CancellationToken),
-            RequestContentType ct = RequestContentType.ApplicationJson,
+            ParametersHandling ct = ParametersHandling.Default,
             object parameters = null)
         {
-            return await Request<T>(resource, method, t, null, null, ct, parameters);
+            return await Request<T>(resource, method, null, null, t, ct, parameters);
         }
 
         public async Task<IRestResponse> Request(string resource, Method method,
+            Action<RestClient> configureClient,
+            Action<RestRequest> configureRequest,
             CancellationToken t = default(CancellationToken),
-            Action<RestClient> configureClient = null,
-            Action<RestRequest> configureRequest = null,
-            RequestContentType ct = RequestContentType.ApplicationJson,
+            ParametersHandling ct = ParametersHandling.Default,
             object parameters = null)
         {
             RestClient client = null;
@@ -296,10 +296,10 @@
         }
 
         public async Task<IRestResponse<T>> Request<T>(string resource, Method method,
-            CancellationToken t = default(CancellationToken),
             Action<RestClient> configureClient = null,
             Action<RestRequest> configureRequest = null,
-            RequestContentType ct = RequestContentType.ApplicationJson,
+            CancellationToken t = default(CancellationToken),
+            ParametersHandling ct = ParametersHandling.Default,
             object parameters = null)
         {
             RestClient client = null;
@@ -320,27 +320,30 @@
             return await client.Execute<T>(request, t);
         }
 
-        public async Task<IRestResponse> TrackedRequest(string resource, Method method, Action<TrackedRestRequest> track,
+        public async Task<IRestResponse> TrackedRequest(string resource, Method method, 
+            Action<TrackedRestRequest> track,
             CancellationToken t = default(CancellationToken),
-            RequestContentType ct = RequestContentType.ApplicationJson,
+            ParametersHandling ct = ParametersHandling.Default,
             object parameters = null)
         {
-            return await TrackedRequest(resource, method, track, t, null, null, ct, parameters);
+            return await TrackedRequest(resource, method, null, null, track, t, ct, parameters);
         }
 
-        public async Task<IRestResponse<T>> TrackedRequest<T>(string resource, Method method, Action<TrackedRestRequest> track,
+        public async Task<IRestResponse<T>> TrackedRequest<T>(string resource, Method method, 
+            Action<TrackedRestRequest> track,
             CancellationToken t = default(CancellationToken),
-            RequestContentType ct = RequestContentType.ApplicationJson,
+            ParametersHandling ct = ParametersHandling.Default,
             object parameters = null)
         {
-            return await TrackedRequest<T>(resource, method, track, t, null, null, ct, parameters);
+            return await TrackedRequest<T>(resource, method, null, null, track, t, ct, parameters);
         }
 
-        public async Task<IRestResponse> TrackedRequest(string resource, Method method, Action<TrackedRestRequest> track,
+        public async Task<IRestResponse> TrackedRequest(string resource, Method method, 
+            Action<RestClient> configureClient,
+            Action<RestRequest> configureRequest,
+            Action<TrackedRestRequest> track,
             CancellationToken t = default(CancellationToken),
-            Action<RestClient> configureClient = null,
-            Action<RestRequest> configureRequest = null,
-            RequestContentType ct = RequestContentType.ApplicationJson,
+            ParametersHandling ct = ParametersHandling.Default,
             object parameters = null)
         {
             RestClient client = null;
@@ -364,11 +367,12 @@
             return response;
         }
 
-        public async Task<IRestResponse<T>> TrackedRequest<T>(string resource, Method method, Action<TrackedRestRequest> track,
+        public async Task<IRestResponse<T>> TrackedRequest<T>(string resource, Method method,
+            Action<RestClient> configureClient,
+            Action<RestRequest> configureRequest,
+            Action<TrackedRestRequest> track,
             CancellationToken t = default(CancellationToken),
-            Action<RestClient> configureClient = null,
-            Action<RestRequest> configureRequest = null,
-            RequestContentType ct = RequestContentType.ApplicationJson,
+            ParametersHandling ct = ParametersHandling.Default,
             object parameters = null)
         {
             RestClient client = null;
@@ -418,64 +422,46 @@
             return client;
         }
 
-        public RestRequest GetRestRequest(string resource, Method method, RequestContentType ct = RequestContentType.ApplicationJson, object parameters = null)
+        public RestRequest GetRestRequest(string resource, Method method, ParametersHandling ph = ParametersHandling.Default, object parameters = null)
         {
             RestRequest request = new RestRequest(resource, method);
 
             if (this.IsAccessTokenValid)
                 request.AddHeader(_accessTokenName, _accessToken);
 
-            switch(ct)
+            switch(ph)
             {
-                case RequestContentType.ApplicationForm:
-
-                    // Set content type
-                    request.AddHeader("Content-Type", "application/x-www-form-urlencoded");
+                case ParametersHandling.Default:
 
                     // Set parameters
-                    if(parameters != null)
+                    if (parameters != null)
                     {
                         foreach (var p in GetParameters(parameters))
-                            request.AddParameter(p.Name, p.Value);                               
+                            request.AddParameter(p.Name, p.Value);
                     }
 
                     break;
 
-                case RequestContentType.ApplicationJson:
+                case ParametersHandling.Body:
 
-                    // Set content type
-                    request.AddHeader("Content-Type", "application/json");
-
-                    // Set parameters
-                    if(parameters != null)
-                    {
-                        if(request.Method == Method.GET)
-                        {
-                            foreach (var p in GetParameters(parameters))
-                                request.AddParameter(p.Name, p.Value);
-                        }
-                        else
-                        {
-                            request.AddBody(parameters);
-                        }                        
-                    }
+                    if(parameters != null)                   
+                        request.AddBody(parameters);
 
                     break;
 
-                case RequestContentType.MultipartFormData:
+                case ParametersHandling.MultipartFormData:
 
                     // We do not specify any any content type header
                     // letting RestSharp decide what to use
 
                     // We add parameters as a single object parameter
                     // letting RestSharp to do the right JSON serialization
-                    if (parameters != null)                                            
-                        request.AddParameter(_multipartJsonField, parameters, ParameterType.RequestBody, "application/json");                    
+                    if (parameters != null)
+                        request.AddParameter(_multipartJsonField, parameters, ParameterType.RequestBody, "application/json");
 
                     break;
+            }     
 
-            }            
-            
             return request;
         }
 
