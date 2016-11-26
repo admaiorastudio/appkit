@@ -1,9 +1,10 @@
 namespace AdMaiora.AppKit.IO
 {
     using System;
-    using System.IO;
+    using System.IO;    
 
     using Foundation;
+    using MobileCoreServices;
 
     public class FileSystemPlatformiOS : IFileSystemPlatform
     {
@@ -101,6 +102,21 @@ namespace AdMaiora.AppKit.IO
         {
             return 
                 Directory.GetFiles(uri.AbsolutePath, searchPattern, recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+        }
+
+        public string GetMimeType(string fileUriOrExt)
+        {
+            if (String.IsNullOrWhiteSpace(fileUriOrExt))
+                return null;
+
+            string extension = Path.GetExtension(fileUriOrExt);
+            if (extension == null)
+                return null;
+
+            var uti = UTType.CreatePreferredIdentifier(UTType.TagClassFilenameExtension, extension.Substring(1), null);
+            var mimeType = UTType.GetPreferredTag(uti, UTType.TagClassMIMEType); 
+            
+            return mimeType;
         }
     }
 }

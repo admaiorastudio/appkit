@@ -6,6 +6,7 @@ namespace AdMaiora.AppKit.IO
 
     using Android.App;
     using Android.OS;
+    using Android.Webkit;
 
     public class FileSystemPlatformAndroid : IFileSystemPlatform
     {
@@ -184,6 +185,21 @@ namespace AdMaiora.AppKit.IO
         {
             return
                 Directory.GetFiles(uri.AbsolutePath, searchPattern, recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+        }
+
+        public string GetMimeType(string fileUriOrExt)
+        {
+            if (String.IsNullOrWhiteSpace(fileUriOrExt))
+                return null;
+
+            string extension = Path.GetExtension(fileUriOrExt);
+            if (extension == null)
+                return null;
+
+            MimeTypeMap myMime = MimeTypeMap.Singleton;
+            String mimeType = myMime.GetMimeTypeFromExtension(extension.Substring(1));
+
+            return mimeType;
         }
     }
 }

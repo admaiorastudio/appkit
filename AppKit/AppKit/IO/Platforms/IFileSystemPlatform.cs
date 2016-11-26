@@ -30,5 +30,7 @@
         UniversalFileInfo GetFileInfo(FileUri uri);
 
         string GetAbsolutePath(StorageLocation location, string path);
+
+        string GetMimeType(string fileUriOrExt);
     }
 }

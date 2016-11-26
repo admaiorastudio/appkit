@@ -20,7 +20,7 @@ namespace AdMaiora.AppKit.Utils
 
     using RestSharp;
 
-    public class ImageLoaderPlatofrmiOS : IImageLoaderPlatform
+    public class ImageLoaderPlatofrmAndroid : IImageLoaderPlatform
     {
         public Executor GetExecutor()
         {

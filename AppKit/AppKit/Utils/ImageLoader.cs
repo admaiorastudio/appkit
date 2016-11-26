@@ -71,6 +71,8 @@ namespace AdMaiora.AppKit.Utils
         private List<string> _downloading;
         private List<DownloadSubscribtion> _downloadedSubscriptions;
 
+        private bool _isMimeTypeMandatory;
+
         #endregion
 
         #region Constructors
@@ -88,6 +90,8 @@ namespace AdMaiora.AppKit.Utils
 
             _downloading = new List<string>();
             _downloadedSubscriptions = new List<DownloadSubscribtion>();
+
+            _isMimeTypeMandatory = true;
         }
 
         #endregion
@@ -131,6 +135,18 @@ namespace AdMaiora.AppKit.Utils
             set
             {
                 _authorizator = value;       
+            }
+        }
+
+        public bool IsMimeTypeMandatory
+        {
+            get
+            {
+                return _isMimeTypeMandatory;
+            }
+            set
+            {
+                _isMimeTypeMandatory = value;
             }
         }
 
@@ -344,6 +360,9 @@ namespace AdMaiora.AppKit.Utils
                         client = _authorizator.GetRestClient();
                         request = _authorizator.GetRestRequest(uri.AbsolutePath, Method.GET);
                     }
+
+                    if (_isMimeTypeMandatory && Path.GetExtension(uri.AbsoluteUri) != null)
+                        request.AddHeader("Accept", _fileSystem.GetMimeType(uri.AbsoluteUri));
                     
                     var response = await client.Execute(request);
                     if (response.StatusCode == HttpStatusCode.OK)

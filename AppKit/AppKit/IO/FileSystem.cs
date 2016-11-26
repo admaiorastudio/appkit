@@ -191,6 +191,14 @@
             return OpenFile(uri, UniversalFileMode.Open, UniversalFileAccess.Read);
         }
 
+        public string GetMimeType(string fileUriOrExt)
+        {
+            if (String.IsNullOrWhiteSpace(fileUriOrExt))
+                return null;
+            
+            return _fileSystemPlatform.GetMimeType(fileUriOrExt);
+        }
+
         #endregion
     }
 }
