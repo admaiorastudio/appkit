@@ -2,10 +2,10 @@
 App accelerator pack to bring common core functionality easy with Xamarin
 
 ## What is AppKit?
-AppKit is a cross-platform PCL library built over Xamarin and its purpose is to make developer life easier. Under the hood AppKit does nothing _special_, it consumes standard **Xamarin.iOS** & **Xamarin.Android** libraries, plus it uses some common and famous external libraries (via Nuget) like: SQLite (portable), Restharp (portable). The fun is that it abstracts for you common specific tasks like writing to the database, call REST services, receiving push notifications, send emails, execute async tasks, syncronize tasks to the main thread and much more. In short, it simply adds an abstraction layer which allows you to write code once for all this stuff (usually in a PCL library which represents your business core of your app)
+AppKit is a cross-platform PCL library built over Xamarin and its purpose is to make developer life easier. Under the hood AppKit does nothing _special_, it consumes standard **Xamarin.iOS** & **Xamarin.Android** libraries, plus it uses some common and famous external libraries (via Nuget) like: SQLite (portable), Restharp (portable). The fun is that it abstracts for you common specific tasks like writing to the database, call REST services, receiving push notifications, send emails, execute async tasks, syncronize tasks to the main thread and much more. In short, it simply adds an abstraction layer which allows you to write code once for all this stuff (usually in a PCL library which represents your business core of your app).
 
 ## What is not AppKit?
-AppKit is not a "write-once" library like **Xamarin.Forms**. It not brings a unique programming model which allows you to write UI views and UI logic once for each platform you want to target. You still need to create separate UI views (.xib or .axml) and UI code. 
+AppKit is not a "write-once" library like **Xamarin.Forms**. It not brings a unique programming model which allows you to write UI views and UI logic once for each platform you want to target. You still need to create separate UI views (.xib or .axml) and UI code logic to wire up widgets events. 
 
 ## Do I need it?
 No, if you like to write boring code from the very base, countless times in any app you develop. 
@@ -27,7 +27,9 @@ Developing cross-platform apps with **AppKit** leads to one major limitation. Yo
 Think about **AppKit** as a _philosophy_ or better as a _mode_ than a real tool, to develop Xamarin apps. **Remember** if you need a real tool to create cross-platform apps, you should consider using other stuff like **Xamarin.Forms** or "MvvmCross".
 
 ## Ok, I want to try it!
-Let's start with some basic stuff. Remember that **AppKit** is more a _philosophy_ than a _real tool_, so keep in mind that this is **NOT** the _only_ way to create apps with **Xamarin**.
+Let's start with some basic stuff. 
+
+Remember that **AppKit** is more a _philosophy_ than a _real tool_, so keep in mind that this is **NOT** the _only_ way to create apps with **Xamarin**.
 
 After you create your _Cross-Platform -> Blank App (Native Portable)_ solution add the **AppKit** Nuget package to all projects.
 
@@ -100,12 +102,13 @@ Ok! now it's time to see what's in store! How can **AppKit** really helps you?
 Down below a full list of all classes exposed by the kit!
 
 #### Handling Common Tasks
+___
 _Need to open the browser? Open a phone call? Execute some async task in a fancy way?_
+
 To accomplish this **AppKit** provides you the **AdMaiora.AppKit.Utils.Executor** class. 
 This is a simple object which will executes very common basic actions as described below:
 
 ##### _Executor class_
-#
 ```cs
     public class Executor
     {
@@ -167,7 +170,9 @@ This is a simple object which will executes very common basic actions as describ
 
 
 #### Handling File System
+___
 _Need to write or read files or folders?_
+
 To accomplish this **AppKit** provides you the **AdMaiora.AppKit.IO.FileSystem** class.
 This is a simple object which handles files or folders creation/reading as described below:
 
@@ -191,7 +196,6 @@ Let's see some examples:
 - "external://cache"_ is a **FolderUri** which points to a folder located in a _public_ store which usually corresponds to a specific folder created by the OS when your app is installed. The folder is publicy exposed, so the user can reach it and all its content, using a specific external tool. The exact (absolute) location of the folder depends on which platform you are targeting.
 
 ##### _FileSystem class_
-#
 ```cs
     public class FileSystem
     {
@@ -256,7 +260,9 @@ Let's see some examples:
 ```
 
 #### Handling User Settings
+___
 _Need to store simple values which configure your app behavior?_
+
 To accomplish this **AppKit** provides you the **AdMaiora.AppKit.Data.UserSettings** class.
 This is a simple object which allows you to read/write simple values in a private app storage as described below:
 
@@ -265,7 +271,6 @@ The storage will exists until the app is installed on the device. Once the app i
 No "cloud stuff" involved here!
 
 ##### _UserSettings class_
-#
 ```cs
     public class UserSettings
     {
@@ -296,7 +301,9 @@ No "cloud stuff" involved here!
 ```
 
 #### Handling Database
+___
 _Need to store data into a SQLite database? Want to get rid of SQL queries and be a "code first" boy?_
+
 To accomplish this **AppKit** provides you the **AdMaiora.AppKit.Data.DataStorage** class.
 This is a simple object which allows you to read/write and query data stored in a SQLite database as described below:
 
@@ -306,7 +313,6 @@ This functionality is based on **SQLite-net**, as reference you can read more he
 https://github.com/praeclarum/sqlite-net
 
 ##### _DataStorage class_
-#
 ```cs
     public class DataStorage
     {
@@ -364,7 +370,9 @@ https://github.com/praeclarum/sqlite-net
 ```
 
 #### Handling REST Services
+___
 _Need to consume a REST service? Need to serialize/deserialize data? Need to track timing and results of endpoint?_
+
 To accomplish this **AppKit** provides you the **AdMaiora.AppKit.Services.ServiceClient** class.
 This is a simple object which allows you to consume REST services as described below:
 
@@ -386,7 +394,6 @@ This functionality is based on **RestSharp Portable**, as reference you can read
 https://github.com/FubarDevelopment/restsharp.portable
 
 ##### _ServiceClient class_
-#
 ```cs
     public class ServiceClient
     {
@@ -514,14 +521,15 @@ https://github.com/FubarDevelopment/restsharp.portable
 ```
 
 #### Handling Image Loading
+___
 _Need to safely and easly load image into views asynchronously? Need to load them into a long list, without any memory issue?_
+
 To accomplish this **AppKit** provides you the **AdMaiora.AppKit.Utils.ImageLoader** class.
 This is a simple object which allows you to load images as described below:
 
 The **AdMaiora.AppKit.Utils.ImageLoader** class exposes a simple interface to asynchronously load images into views fetching them from local resources (_bundle_) or remote resources (_http_). It gracefully handle memory using a simple _LRU Policy Cache_ (last recently used) of images.  
 
 ##### _ImageLoader class_
-#
 ```cs
     public class ImageLoader
     {
@@ -583,7 +591,9 @@ The **AdMaiora.AppKit.Utils.ImageLoader** class exposes a simple interface to as
 ```
 
 #### Handling Localization
+___
 _Need to localize your app? Want to do it in a simply and unique way on each platform?_
+
 To accomplish this **AppKit** provides you the **AdMaiora.AppKit.Localization.Localizator** class.
 This is a simple object which allows you to manage and apply translations into UI as described below:
 
@@ -594,7 +604,6 @@ The **AdMaiora.AppKit.Localization.Localizator** class will handle automatic sel
 For comodity the enanched dictionary also exposes some methods to facilitate DateTime and Currency value formatting.
 
 ##### _Localizator class_
-#
 ```cs
     // Get the current culture name used by the dictionary (for eg. en-US or it-IT)
     public string Culture
@@ -637,7 +646,9 @@ For comodity the enanched dictionary also exposes some methods to facilitate Dat
 ```
 
 #### Handling Logging
+___
 _Need to add simple text file loggin in your app?_
+
 To accomplish this **AppKit** provides you the **AdMaiora.AppKit.Utils.Logger** class.
 This is a simple object which allows you to write simple textual log files as described below:
 
@@ -646,7 +657,6 @@ The **AdMaiora.AppKit.Utils.Logger** exposes a really simple interface to output
 The logger will handle automatically the recycling operation of the log file, this to avoid memory consumption!
 
 ##### _Localizator class_
-#
 ```cs
     public class Logger
     {
@@ -677,6 +687,7 @@ The logger will handle automatically the recycling operation of the log file, th
 ```
 
 #### Let's wrap all together
+___
 Below a simple _AppController class_ basic implementation using **AppKit**. We are incorporating some helper objects described above, that later we will se in action.
 
 ```cs
@@ -1117,10 +1128,3 @@ Have a look to:
     a simple todo list application
 - ##### [Bugghy](https://github.com/admaiorastudio/bugghy)
     a simple bug tracking application
-
-
-
-
-
-
- 
