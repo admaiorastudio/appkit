@@ -1122,9 +1122,6 @@ This is a basic documentation. We suggest to you to check our app examples which
 All source code is available, fully forkable, modificable and playable in **GitHub**
 
 Have a look to:
-- ##### [Chatty](https://github.com/admaiorastudio/chatty) 
-    a simple chat application
-- ##### [Listy](https://github.com/admaiorastudio/listy) 
-    a simple todo list application
-- ##### [Bugghy](https://github.com/admaiorastudio/bugghy)
-    a simple bug tracking application
+- [Chatty](https://github.com/admaiorastudio/chatty) a simple chat application
+- [Listy](https://github.com/admaiorastudio/listy) a simple todo list application
+- [Bugghy](https://github.com/admaiorastudio/bugghy) a simple bug tracking application
