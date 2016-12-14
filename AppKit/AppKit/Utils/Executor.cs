@@ -47,6 +47,7 @@
             _executorPlatform.SendEmail(toRecipients, subject, text, attachments);
         }
 
+        [Obsolete("This method is obsolete, you should use the ExecuteOnMainThread(Action action) method which no longer needs context object.")]
         public void ExecuteOnMainThread(object context, Action action)
         {
             _executorPlatform.ExecuteOnMainThread(context, action);
@@ -54,7 +55,7 @@
 
         public void ExecuteOnMainThread(Action action)
         {
-            ExecuteOnMainThread(null, action);
+            _executorPlatform.ExecuteOnMainThread(null, action);
         }
 
         public async Task ExecuteOnAsyncTask<TResult>(CancellationToken ctk, Func<TResult> function, Action<TResult> whenFinished = null, Action<Exception> whenException = null)

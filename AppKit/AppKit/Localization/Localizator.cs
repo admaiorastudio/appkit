@@ -258,9 +258,6 @@
 
         #endregion
 
-        #region Public Static Methods
-
-        #endregion
 
         #region Public Methods
 

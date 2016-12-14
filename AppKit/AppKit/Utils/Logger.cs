@@ -112,6 +112,10 @@
             Write("ERROR", error, ex);
         }
 
+        #endregion
+
+        #region Methods
+
         private void Write(string tag, string message, Exception exception = null)
         {
 
