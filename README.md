@@ -2,41 +2,43 @@
 App accelerator pack to bring common core functionality easy with Xamarin
 
 ## What is AppKit?
-AppKit is a cross-platform PCL library built over Xamarin and its purpose is to make developer life easier. Under the hood AppKit does nothing _special_, it consumes standard **Xamarin.iOS** & **Xamarin.Android** libraries, plus it uses some common and famous external libraries (via Nuget) like: SQLite (portable), Restharp (portable). The fun is that it abstracts for you common specific tasks like writing to the database, call REST services, receiving push notifications, send emails, execute async tasks, syncronize tasks to the main thread and much more. In short, it simply adds an abstraction layer which allows you to write code once for all this stuff (usually in a PCL library which represents your business core of your app).
+**AppKit** is a cross-platform PCL library built over Xamarin and its purpose is to make developer life easier. Under the hood it does nothing _special_, it consumes standard **Xamarin.iOS** & **Xamarin.Android** libraries, plus it uses some common and famous external libraries (via Nuget) like: SQLite (portable), Restharp (portable). The fun part is that it abstracts for you common specific tasks like: writing to the database, call REST services, receiving push notifications, send emails, execute async tasks, syncronize tasks to the main thread and much more. In short, it simply adds an abstraction layer which allows you to write code once for all this stuff (usually in a PCL library which represents your business core of your app).
 
 ## What is not AppKit?
-AppKit is not a "write-once" library like **Xamarin.Forms**. It not brings a unique programming model which allows you to write UI views and UI logic once for each platform you want to target. You still need to create separate UI views (.xib or .axml) and UI code logic to wire up widgets events. 
+**AppKit** is not a "write-once" library like **Xamarin.Forms**. It not brings a unique programming model which allows you to write UI views and UI logic once for each platform you want to target. You still need to create separate UI views (.xib or .axml) and UI code logic to wire up widgets events. 
 
 ## Do I need it?
 No, if you like to write boring code from the very base, countless times in any app you develop. 
 Yes, if you want to speed up the development of your apps, leaving **AppKit** to do basics tasks for you.
 
 ## How it helps me?
-AppKit helps you in a very simple way. It allows you to develop in a _happy_ and very _easy-porting_ mode. You still have full control over the _native platform_ you want to target, with the only exception that you will have at you disposal many enanched or helper classes that will _unify_ business core logic.
+**AppKit** helps you in a very simple way. It allows you to develop in a _happy_ and very _easy-porting_ mode. You still have full control over the _native platform_ you want to target, with the only exception that you will have at you disposal many enanched or helper classes that will _unify_ business core logic.
 
 Steps involved to do this are the following:
  1. First you create a Cross-Platform -> Blank App (Native Portable) 
- 2. Then choose an "initial" platform (could be iOS or Android, it doesn't matter) and start to design and create your UI views
- 3. When the "bones" are ready you wire up widgets events to gather input or execute actions 
- 4. You than create a global "AppController" class which holds all the business core logic (actions) of your app. AppKit will help you here.
- 5. Then you _port_ the app to the other platform, but a this point you just need to repeat points 2 and 3
+ 2. Add the **AppKit.UI** Nuget package to your solution
+ 3. Then choose an "initial" platform (could be **iOS** or **Android**, it doesn't matter) and start to design and create your UI views
+ 4. When the "bones" are ready you wire up widgets events to gather input or execute actions 
+ 5. Create a global "AppController" class which holds all the business core logic (actions) of your app (**AppKit** will help you here)
+ 6. Use the newly created _AppController actions_ in your UI (mostly in the widgets events)
+ 7. Then you _port_ the app to the other platform, but a this point you just need to create a "copy" of the _original_ UI you designed, wire up events and consume your _AppController actions_ as the same you did before.
 
 ## An important thing to note!
-Developing cross-platform apps with **AppKit** leads to one major limitation. You can't use any specific platform feature that is not "abstractable" by the library itself. At least, you can, but you will lose the _easy-porting_ mode. So for example, you can't use **Storyboard** to design your UI in **iOS**, as a matter of fact, there's nothign similar in **Android**.
+Developing cross-platform apps with **AppKit** leads to one major limitation. You can't use any specific platform feature that is not "abstractable" by the library itself. At least, you can, but you will lose the _easy-porting_ mode. So for example, you can't use a **Storyboard** to design your UI in **iOS**, as a matter of fact, there's nothign similar in **Android**.
 
-Think about **AppKit** as a _philosophy_ or better as a _mode_ than a real tool, to develop Xamarin apps. **Remember** if you need a real tool to create cross-platform apps, you should consider using other stuff like **Xamarin.Forms** or "MvvmCross".
+Think about **AppKit** as a _facilitator_ than a real tool, to develop Xamarin apps. **Remember** if you need a real tool to create cross-platform apps, you should consider using other stuff like **Xamarin.Forms** or **MvvmCross**.
 
 ## Ok, I want to try it!
 Let's start with some basic stuff. 
 
-Remember that **AppKit** is more a _philosophy_ than a _real tool_, so keep in mind that this is **NOT** the _only_ way to create apps with **Xamarin**.
+Remember that **AppKit** is more an _accelerator_ than a _real tool_, so keep in mind that this is **NOT** the _only_ way to create apps with **Xamarin**.
 
 After you create your _Cross-Platform -> Blank App (Native Portable)_ solution add the **AppKit** Nuget package to all projects.
 
 Then you are ready to begin!
 
 ### The App Structure
-First of all we propose a "structure model" for you app. 
+First of all we propose a "structure model" for your app. 
 
 A good strategy colud be to "divide" your app in two macro blocks: core logic and UI logic. The first serves as the business logic of your app, while the second incapsulates all UI implementations.
 
@@ -50,7 +52,7 @@ In your newly created solution you will find:
 _This class is implemented in the **PCL project** in your solution_
 ```           
  AppController // static class you need to create which holds all the common business logic of your app
-      +
+      |
       |
       +--FunnyAction1() // static method which do logic stuff. appkit will come handy here!
       +--FunnyAction2()
@@ -63,10 +65,10 @@ _This class is implemented in the **PCL project** in your solution_
 _All these classes are implemented in the **platform specific project** in your solution_
 ```
  AppEntryPoint: class you need to implement
-      +           
+      |           
       |
       +-MainAppScreen: this is usually a UINavigationViewController class or an Activity class
-               +
+               |
                |
                +-SubAppScreen1: this is usually a UIViewController class or a Fragment class
                +-SubAppScreen2  here you consume your AppController.Action methods
@@ -75,8 +77,8 @@ _All these classes are implemented in the **platform specific project** in your 
                +-SubAppScreenN    
 ```
 
-### Core Logic: The AppController class
-An **AppController** class is nothing more than a static class full of static useful methods which represent the business core logic of your app. Usually these methods do things like: write to a database, call a rest service, write/read files to/from the internal or external memory. 
+### Core Logic: The AppController
+An _AppController_ is nothing more than a static class full of static useful methods which represent the business core logic of your app. Usually these methods do things like: write to a database, call a rest service, write/read files to/from the internal or external memory. 
 
 To accomplish this you should use specific platform API or integrate other external PCL libraries. There's a lot of fragmentation out there (speaking of Nuget), choosing can be difficult, so why not let's **AppKit** takes the most used ones for you, wrap all together and expose them via some useful and simpler objects?
 
@@ -850,14 +852,14 @@ Now it's time to show you how to implement some magic!
     }
 ```
 
-### UI Logic: The AppEntryPoint class               
-Usually your _AppEntryPoint_ class are an implementation of these classes:
+### UI Logic: The AppEntryPoint               
+Usually your _AppEntryPoint_ is an implementation of these classes:
 - **UIKit.UIApplicationDelegate** class for **iOS**
 - **Android.App.Application** class for **Android**
 
 (Android hides it for you, but believe me you can create one. Read more here https://developer.android.com/reference/android/app/Application.html)
 
-With **AppKit** you need to implement your _AppEntryPoint_ class starting from: 
+With **AppKit** you need to implement your _AppEntryPoint_ starting from: 
 - **AdMaiora.AppKit.UIAppKitApplicationDelegate** class for **iOS**
 - **AdMaiora.AppKit.AppKitApplication** class for **Android**
 
@@ -941,8 +943,9 @@ while in **Android** you still need to override the _OnCreate()_ method:
     }
 ```
 
-### UI Logic: The MainAppScreen class  
-Nothing special to say here. Your implementation depends on which platform you are targeting. 
+### UI Logic: The MainAppScreen  
+A **MainAppScreen** usually represents your main UI _holder_ which will contains all others **SubAppScreen** elements. 
+This object will be responsible for few major things in your app, one of the most important is how you will _navigate_ between the various _sections_ of your app. Each _section_ can be represented by a single **SubAppScreen** or a set of them, one of which will represent the "root" of the _section_.
 
 In **iOS** you could have something like this:
 
@@ -1019,8 +1022,9 @@ while in **Android** you will have something like this:
     }
 ```
 
-### UI Logic: The SubAppScreen class  
-Nothing special to say here. Your implementation depends on which platform you are targeting. 
+### UI Logic: The SubAppScreen
+A **SubAppScreen** usually represent a single section of your app or a part of it. Each **SubAppScreen** will contain one or more UI widgets and UI logic to let the user do some stuff. Remember to put minimal code in the UI logic and let the _AppController_ class do the heavy stuff, this will be useful when porting the app from one platform to another.
+
 Here is a good point where to consume your _AppController_ methods.
 
 In **iOS** you could have something like this:
@@ -1088,16 +1092,13 @@ while in **Android** you will have something like this:
         public override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
-
         }
 
-        public override void OnCreateView(LayoutInflater inflater, ViewGroup container)
+        public override View OnCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
-            base.OnCreateView(inflater, container);
-
             #region Desinger Stuff
 
-            SetContentView(Resource.Layout.FragmentSub, inflater, container);            
+            View view = inflater.Inflate(Resource.Layout.FragmentSub, container, false);          
 
             #endregion     
             
@@ -1106,6 +1107,8 @@ while in **Android** you will have something like this:
             var items = AppController.GetDataItmes();
             
             // Bind logic to your UITableView
+            
+            return view;
         }
 
         public override void OnDestroyView()
@@ -1117,7 +1120,7 @@ while in **Android** you will have something like this:
 ```
 
 ## In Conclusion
-This is a basic documentation. We suggest to you to check our app examples which implement fully the **AppKit** library. 
+This is a basic documentation. We suggest to you to check our app examples which fully implement the **AppKit** library. 
 
 All source code is available, fully forkable, modificable and playable in **GitHub**
 
