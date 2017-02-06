@@ -256,26 +256,26 @@
         #region Request Methods
 
         public async Task<IRestResponse> Request(string resource, Method method,
-            CancellationToken t = default(CancellationToken),
-            ParametersHandling ct = ParametersHandling.Default,
+            CancellationToken ct = default(CancellationToken),
+            ParametersHandling p = ParametersHandling.Default,
             object parameters = null)
         {
-            return await Request(resource, method, null, null, t, ct, parameters);
+            return await Request(resource, method, null, null, ct, p, parameters);
         }
 
         public async Task<IRestResponse<T>> Request<T>(string resource, Method method,
-            CancellationToken t = default(CancellationToken),
-            ParametersHandling ct = ParametersHandling.Default,
+            CancellationToken ct = default(CancellationToken),
+            ParametersHandling p = ParametersHandling.Default,
             object parameters = null)
         {
-            return await Request<T>(resource, method, null, null, t, ct, parameters);
+            return await Request<T>(resource, method, null, null, ct, p, parameters);
         }
 
         public async Task<IRestResponse> Request(string resource, Method method,
             Action<RestClient> configureClient,
             Action<RestRequest> configureRequest,
-            CancellationToken t = default(CancellationToken),
-            ParametersHandling ct = ParametersHandling.Default,
+            CancellationToken ct = default(CancellationToken),
+            ParametersHandling p = ParametersHandling.Default,
             object parameters = null)
         {
             RestClient client = null;
@@ -287,19 +287,19 @@
                     client = GetRestClient();
                     configureClient?.Invoke(client);
 
-                    request = GetRestRequest(resource, method, ct, parameters);
+                    request = GetRestRequest(resource, method, p, parameters);
                     configureRequest?.Invoke(request);
 
                 });
 
-            return await client.Execute(request, t);
+            return await client.Execute(request, ct);
         }
 
         public async Task<IRestResponse<T>> Request<T>(string resource, Method method,
             Action<RestClient> configureClient = null,
             Action<RestRequest> configureRequest = null,
-            CancellationToken t = default(CancellationToken),
-            ParametersHandling ct = ParametersHandling.Default,
+            CancellationToken ct = default(CancellationToken),
+            ParametersHandling p = ParametersHandling.Default,
             object parameters = null)
         {
             RestClient client = null;
@@ -311,39 +311,39 @@
                     client = GetRestClient();
                     configureClient?.Invoke(client);
 
-                    request = GetRestRequest(resource, method, ct, parameters);
+                    request = GetRestRequest(resource, method, p, parameters);
                     configureRequest?.Invoke(request);
 
                 });
 
 
-            return await client.Execute<T>(request, t);
+            return await client.Execute<T>(request, ct);
         }
 
         public async Task<IRestResponse> TrackedRequest(string resource, Method method, 
             Action<TrackedRestRequest> track,
-            CancellationToken t = default(CancellationToken),
-            ParametersHandling ct = ParametersHandling.Default,
+            CancellationToken ct = default(CancellationToken),
+            ParametersHandling p = ParametersHandling.Default,
             object parameters = null)
         {
-            return await TrackedRequest(resource, method, null, null, track, t, ct, parameters);
+            return await TrackedRequest(resource, method, null, null, track, ct, p, parameters);
         }
 
         public async Task<IRestResponse<T>> TrackedRequest<T>(string resource, Method method, 
             Action<TrackedRestRequest> track,
-            CancellationToken t = default(CancellationToken),
-            ParametersHandling ct = ParametersHandling.Default,
+            CancellationToken ct = default(CancellationToken),
+            ParametersHandling p = ParametersHandling.Default,
             object parameters = null)
         {
-            return await TrackedRequest<T>(resource, method, null, null, track, t, ct, parameters);
+            return await TrackedRequest<T>(resource, method, null, null, track, ct, p, parameters);
         }
 
         public async Task<IRestResponse> TrackedRequest(string resource, Method method, 
             Action<RestClient> configureClient,
             Action<RestRequest> configureRequest,
             Action<TrackedRestRequest> track,
-            CancellationToken t = default(CancellationToken),
-            ParametersHandling ct = ParametersHandling.Default,
+            CancellationToken ct = default(CancellationToken),
+            ParametersHandling p = ParametersHandling.Default,
             object parameters = null)
         {
             RestClient client = null;
@@ -355,13 +355,13 @@
                     client = GetRestClient();
                     configureClient?.Invoke(client);
 
-                    request = GetRestRequest(resource, method, ct, parameters);
+                    request = GetRestRequest(resource, method, p, parameters);
                     configureRequest?.Invoke(request);
 
                 });
 
             var trequest = new TrackedRestRequest(request, parameters);
-            var response = await client.Execute(trequest, t);
+            var response = await client.Execute(trequest, ct);
             track?.Invoke(trequest);
 
             return response;
@@ -371,8 +371,8 @@
             Action<RestClient> configureClient,
             Action<RestRequest> configureRequest,
             Action<TrackedRestRequest> track,
-            CancellationToken t = default(CancellationToken),
-            ParametersHandling ct = ParametersHandling.Default,
+            CancellationToken ct = default(CancellationToken),
+            ParametersHandling p = ParametersHandling.Default,
             object parameters = null)
         {
             RestClient client = null;
@@ -384,14 +384,14 @@
                     client = GetRestClient();
                     configureClient?.Invoke(client);
 
-                    request = GetRestRequest(resource, method, ct, parameters);
+                    request = GetRestRequest(resource, method, p, parameters);
                     configureRequest?.Invoke(request);
 
                 });
 
 
             var trequest = new TrackedRestRequest(request, parameters);
-            var response = await client.Execute<T>(trequest, t);
+            var response = await client.Execute<T>(trequest, ct);
             track?.Invoke(trequest);
 
             return response;
