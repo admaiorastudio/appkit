@@ -10,6 +10,12 @@
 
     using AdMaiora.AppKit.IO;
 
+    public enum OrderByDirection
+    {
+        Asc,
+        Desc,
+    }
+
     public class DataStorage
     {
         #region Constants and Fields
@@ -102,7 +108,7 @@
             return entity;
         }
 
-        public List<TEntity> FindAll<TEntity>() where TEntity : class, new()
+        public List<TEntity> GetAll<TEntity>() where TEntity : class, new()
         {
             List<TEntity> entities = null;
             InSqlContext(c =>
@@ -114,7 +120,22 @@
             return entities.Count > 0 ? entities : null;
         }
 
-        public List<TEntity> FindAll<TEntity>(Func<TEntity, bool> selector) where TEntity : class, new()
+        public List<TEntity> GetAll<TEntity>(int pageIndex, int pageSize, out int totalItems) where TEntity : class, new()
+        {
+            int count = 0;
+            List<TEntity> entities = null;
+            InSqlContext(c =>
+            {
+                EnsureTable(c, typeof(TEntity));
+                count = c.Table<TEntity>().Count();
+                entities = c.Table<TEntity>().Skip(pageIndex * pageSize).Take(pageSize).ToList();
+            });
+
+            totalItems = count;
+            return entities.Count > 0 ? entities : null;
+        }
+
+        public List<TEntity> FindAll<TEntity>(Expression<Func<TEntity, bool>> selector) where TEntity : class, new()
         {
             List<TEntity> entities = null;
             InSqlContext(c =>
@@ -123,6 +144,87 @@
                 entities = new List<TEntity>(c.Table<TEntity>().Where(selector));
             });
 
+            return entities.Count > 0 ? entities : null;
+        }
+
+        public List<TEntity> FindAll<TEntity>(Expression<Func<TEntity, bool>> selector, Expression<Func<TEntity, object>> orderer, OrderByDirection od) where TEntity : class, new()
+        {
+            List<TEntity> entities = null;
+            InSqlContext(c =>
+            {
+                EnsureTable(c, typeof(TEntity));
+                var query = c.Table<TEntity>().Where(selector);
+                if (od == OrderByDirection.Asc)
+                    query = query.OrderBy(orderer);
+                else
+                    query = query.OrderByDescending(orderer);
+                entities = new List<TEntity>(query);
+            });
+
+            return entities.Count > 0 ? entities : null;
+        }
+
+        public List<TEntity> FindAll<TEntity>(Func<TEntity, bool> selector, int pageIndex, int pageSize, out int totalItems) where TEntity : class, new()
+        {
+            int count = 0;
+            List<TEntity> entities = null;
+            InSqlContext(c =>
+            {
+                EnsureTable(c, typeof(TEntity));
+                count = c.Table<TEntity>().Where(selector).Count();
+                entities = new List<TEntity>(c.Table<TEntity>().Where(selector).Skip(pageIndex * pageSize).Take(pageSize));
+            });
+
+            totalItems = count;
+            return entities.Count > 0 ? entities : null;
+        }
+
+        public List<TEntity> FindAll<TEntity>(Expression<Func<TEntity, bool>> selector, Expression<Func<TEntity, object>> orderer, OrderByDirection od, int pageIndex, int pageSize, out int totalItems) where TEntity : class, new()
+        {
+            int count = 0;
+            List<TEntity> entities = null;
+            InSqlContext(c =>
+            {
+                EnsureTable(c, typeof(TEntity));
+                count = c.Table<TEntity>().Where(selector).Count();
+                var query = c.Table<TEntity>().Where(selector);
+                if (od == OrderByDirection.Asc)
+                    query = query.OrderBy(orderer);
+                else
+                    query = query.OrderByDescending(orderer);
+                entities = new List<TEntity>(query.Skip(pageIndex * pageSize).Take(pageSize));
+            });
+
+            totalItems = count;
+            return entities.Count > 0 ? entities : null;
+        }
+
+        public List<TEntity> FindByQuery<TEntity>(string query, params object[] args) where TEntity : class, new()
+        {
+            List<TEntity> entities = null;
+            InSqlContext(c =>
+            {
+                EnsureTable(c, typeof(TEntity));
+                entities = c.Query<TEntity>(query, args);
+            });
+
+            return entities.Count > 0 ? entities : null;
+        }
+
+        public List<TEntity> FindByQuery<TEntity>(string query, object[] args, int pageIndex, int pageSize, out int totalItems) where TEntity : class, new()
+        {
+            int count = 0;
+            List<TEntity> entities = null;
+            InSqlContext(c =>
+            {
+                EnsureTable(c, typeof(TEntity));
+
+                count = c.ExecuteScalar<int>(query.Replace("*", "COUNT()"), args);
+                args = (new List<object>(args)).Concat(new object[] { pageSize, pageIndex * pageSize }).ToArray();
+                entities = c.Query<TEntity>(String.Concat(query, " LIMIT ? OFFSET ?"), args);
+            });
+
+            totalItems = count;
             return entities.Count > 0 ? entities : null;
         }
 
@@ -170,7 +272,7 @@
             InSqlContext(c =>
             {
                 EnsureTable(c, typeof(TEntity));
-                var entities = FindAll<TEntity>();
+                var entities = c.Table<TEntity>().Where(selector).ToList();
                 if (entities != null
                     && entities.Count > 0)
                 {
