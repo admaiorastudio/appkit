@@ -9,11 +9,11 @@ namespace AdMaiora.AppKit
     using Android.Content;
     using Android.OS;
     using Android.Runtime;
-    using Android.Gms.Common;
-    using Android.Gms.Gcm.Iid;
+    using Android.Gms.Common;    
     using Android.Gms.Gcm;
     using Android.Views;
     using Android.Widget;
+    using Android.Gms.Iid;
 
     public class AppKitApplication : Application
     {

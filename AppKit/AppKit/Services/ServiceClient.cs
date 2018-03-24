@@ -9,8 +9,7 @@
     using System.Reflection;
     using System.Diagnostics;
 
-    using RestSharp.Portable;
-    using RestSharp.Portable.HttpClient;
+    using RestSharp;
 
     public enum ParametersHandling
     {
@@ -97,15 +96,13 @@
 
         private string _baseUrl;
 
-        private double _requestTimeout;
+        private int _requestTimeout;
         private string _accessTokenName;
         private string _multipartJsonField;
 
         private string _accessToken;
         private DateTime? _accessTokenExpirationDate;
-
-        private bool _handleHttpErrors;
-
+        
         #endregion
 
         #region Constructors
@@ -147,7 +144,7 @@
             }
         }
 
-        public double RequestTimeout
+        public int RequestTimeout
         {
             get
             {
@@ -206,19 +203,6 @@
             {
                 _multipartJsonField = value;
             }
-        }
-
-        public bool HandleHttpErrors
-        {
-            get
-            {
-                return _handleHttpErrors;
-            }
-            set
-            {
-                _handleHttpErrors = value;
-            }
-
         }
 
         public NetworkConnection NetworkConnection
@@ -292,7 +276,7 @@
 
                 });
 
-            return await client.Execute(request, ct);
+            return await client.ExecuteTaskAsync(request, ct);
         }
 
         public async Task<IRestResponse<T>> Request<T>(string resource, Method method,
@@ -317,7 +301,7 @@
                 });
 
 
-            return await client.Execute<T>(request, ct);
+            return await client.ExecuteTaskAsync<T>(request, ct);
         }
 
         public async Task<IRestResponse> TrackedRequest(string resource, Method method, 
@@ -415,9 +399,8 @@
 
         public RestClient GetRestClient()
         {
-            RestClient client = new RestClient(this.BaseUrl);
-            client.IgnoreResponseStatusCode = !_handleHttpErrors;
-            client.Timeout = TimeSpan.FromSeconds(_requestTimeout);
+            RestClient client = new RestClient(this.BaseUrl);            
+            client.Timeout = _requestTimeout;
 
             return client;
         }
@@ -457,7 +440,7 @@
                     // We add parameters as a single object parameter
                     // letting RestSharp to do the right JSON serialization
                     if (parameters != null)
-                        request.AddParameter(_multipartJsonField, parameters, ParameterType.RequestBody, "application/json");
+                        request.AddParameter(_multipartJsonField, parameters, "application/json", ParameterType.RequestBody);
 
                     break;
             }     

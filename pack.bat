@@ -1,1 +1,1 @@
-".nuget/nuget.exe" pack Package.nuspec
+"D:\Develop\Tools\nuget.exe" pack Package.nuspec

@@ -1,13 +1,12 @@
 ﻿namespace AdMaiora.AppKit.Services
-{
+{    
     using System;
     using System.Threading;
     using System.Threading.Tasks;
 
-    using RestSharp.Portable;
-    using RestSharp.Portable.HttpClient;    
+    using RestSharp;
 
-    static class RestClientExtension
+    public static class RestClientExtension
     {
         #region Public Methods
 
@@ -18,7 +17,7 @@
 
             try
             {
-                request.Response = await client.Execute(request.Request, ct);
+                request.Response = await client.ExecuteTaskAsync(request.Request, ct);
                 request.Timer.Stop();
                 return request.Response;
             }
@@ -39,7 +38,7 @@
 
             try
             {
-                request.Response = await client.Execute<T>(request.Request, ct);
+                request.Response = await client.ExecuteTaskAsync<T>(request.Request, ct);
                 request.Timer.Stop();
                 return (IRestResponse<T>)request.Response;
             }

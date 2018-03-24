@@ -12,8 +12,7 @@ namespace AdMaiora.AppKit.Utils
     using AdMaiora.AppKit.Data;
     using AdMaiora.AppKit.Services;
     
-    using RestSharp.Portable;
-    using RestSharp.Portable.HttpClient;
+    using RestSharp;
 
     #pragma warning disable CS4014
     public class ImageLoader
@@ -343,8 +342,7 @@ namespace AdMaiora.AppKit.Utils
                     if (_authorizator == null)
                     {
                         client = new RestClient(host);
-                        client.Timeout = TimeSpan.FromSeconds(5);
-                        client.IgnoreResponseStatusCode = true;
+                        client.Timeout = 5;                        
                         request = new RestRequest(uri.AbsolutePath);
                     }
                     else
@@ -364,7 +362,7 @@ namespace AdMaiora.AppKit.Utils
                     if (_isMimeTypeMandatory && Path.GetExtension(uri.AbsoluteUri) != null)
                         request.AddHeader("Accept", _fileSystem.GetMimeType(uri.AbsoluteUri));
                     
-                    var response = await client.Execute(request);
+                    var response = await client.ExecuteTaskAsync(request);
                     if (response.StatusCode == HttpStatusCode.OK)
                     {
                         await (new TaskFactory()).StartNew(
