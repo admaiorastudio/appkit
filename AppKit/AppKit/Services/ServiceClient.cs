@@ -113,9 +113,11 @@
 
             _baseUrl = baseUrl;
 
-            _requestTimeout = 5;
+            _requestTimeout = 5000;
             _accessTokenName = "Authorization";
             _multipartJsonField = "json_body";
+
+            this.DataFormat = DataFormat.Json;
         }
 
         #endregion
@@ -203,6 +205,12 @@
             {
                 _multipartJsonField = value;
             }
+        }
+
+        public DataFormat DataFormat
+        {
+            get;
+            set;
         }
 
         public NetworkConnection NetworkConnection
@@ -408,6 +416,7 @@
         public RestRequest GetRestRequest(string resource, Method method, ParametersHandling ph = ParametersHandling.Default, object parameters = null)
         {
             RestRequest request = new RestRequest(resource, method);
+            request.RequestFormat = this.DataFormat;
 
             if (this.IsAccessTokenValid)
                 request.AddHeader(_accessTokenName, _accessToken);
@@ -427,8 +436,17 @@
 
                 case ParametersHandling.Body:
 
-                    if(parameters != null)                   
-                        request.AddBody(parameters);
+                    if(parameters != null)
+                    {
+                        if (this.DataFormat == DataFormat.Json)
+                        {
+                            request.AddJsonBody(parameters);
+                        }
+                        else
+                        {
+                            request.AddBody(parameters);
+                        }
+                    }                        
 
                     break;
 

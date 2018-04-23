@@ -4,111 +4,35 @@ namespace AdMaiora.AppKit
     using System.Collections.Generic;
     using System.Linq;
     using System.Text;
-
+    using AdMaiora.AppKit.Data;
+    using AdMaiora.AppKit.Notifications;
     using Foundation;
     using UIKit;
 
-    using AdMaiora.AppKit.Data;
-    
-    public abstract class UIAppKitApplicationDelegate : UIApplicationDelegate
+    class AppKitApnMessagingService
     {
-        #region Properties
+        #region Helper Methods
 
-        public override UIWindow Window
+        public static bool HandleStartUpNotification(NSDictionary launchOptions, out PushNotificationData launchNotification)
         {
-            get;
-            set;
-        }
+            launchNotification = null;
 
-        public bool IsApplicationInForeground
-        {
-            get
-            {
-                return this.Window != null 
-                    && UIApplication.SharedApplication.ApplicationState == UIApplicationState.Active;
-            }
-        }
-
-        private bool IsRemoteNotificationLaunched
-        {
-            get;
-            set;
-        }
-
-        #endregion
-
-        #region Application Methods
-
-        public override void ReceivedRemoteNotification(UIApplication application, NSDictionary userInfo)
-        {
-            ReceivedRemoteNotification(GetNotificationData(userInfo));
-        }
-
-        public virtual void ReceivedRemoteNotification(Dictionary<string, object> data)
-        {
-
-        }
-
-        #endregion
-
-        #region Methods
-
-        protected bool RegisterMainLauncher(UIViewController mainViewController, NSDictionary launchOptions)
-        {
             if (launchOptions != null
                 && launchOptions.ContainsKey(UIApplication.LaunchOptionsRemoteNotificationKey))
             {
-                var userInfo = launchOptions.ObjectForKey(UIApplication.LaunchOptionsRemoteNotificationKey) as NSDictionary;
-                if (userInfo != null)
+                var message = launchOptions.ObjectForKey(UIApplication.LaunchOptionsRemoteNotificationKey) as NSDictionary;
+                if (message != null)
                 {
-                    ReceivedRemoteNotification(UIApplication.SharedApplication, launchOptions);
-                    if (this.IsRemoteNotificationLaunched)
-                        return true;                
+                    launchNotification = GetNotificationData(message);
+                    return true;
                 }
             }
 
-            this.Window = new UIWindow(UIScreen.MainScreen.Bounds);
-            this.Window.RootViewController = mainViewController;
-            this.Window.MakeKeyAndVisible();
-
-            return true;
+            return false;
         }
 
-        protected void RegisterForRemoteNotifications(NSDictionary launchOptions)
-        {
-            if (UIDevice.CurrentDevice.CheckSystemVersion(8, 0))
-            {
-                var pushSettings = UIUserNotificationSettings.GetSettingsForTypes(
-                       UIUserNotificationType.Alert | UIUserNotificationType.Badge | UIUserNotificationType.Sound,
-                       new NSSet());
 
-                UIApplication.SharedApplication.RegisterUserNotificationSettings(pushSettings);
-                UIApplication.SharedApplication.RegisterForRemoteNotifications();
-            }
-            else
-            {
-                UIRemoteNotificationType notificationTypes = UIRemoteNotificationType.Alert | UIRemoteNotificationType.Badge | UIRemoteNotificationType.Sound;
-                UIApplication.SharedApplication.RegisterForRemoteNotificationTypes(notificationTypes);
-            }
-        }
-
-        protected void HandleRemoteNotificationLaunching(Action whenStarting, Action whenResuming)
-        {
-            this.IsRemoteNotificationLaunched = true;
-
-            // If Window is null, the app is restarting after the user
-            // has tapped the "Heads-up" notification
-            if (this.Window == null)
-            {
-                whenStarting?.Invoke();
-            }
-            else
-            {
-                whenResuming?.Invoke();                                
-            }
-        }
-
-        private Dictionary<string, object> GetNotificationData(NSDictionary userInfo)
+        public static PushNotificationData GetNotificationData(NSDictionary message)
         {
             /*
              * JSON Sample for notifications
@@ -130,21 +54,21 @@ namespace AdMaiora.AppKit
             *
             */
 
-            if (userInfo == null)
+            if (message == null)
                 return null;
 
-            var values = new Dictionary<string, object>();
+            PushNotificationData notification = new PushNotificationData();
 
             // Are we getting this from an "remote notification launch options" ?
-            if (userInfo.ContainsKey(UIApplication.LaunchOptionsRemoteNotificationKey))
-                userInfo = (NSDictionary)userInfo.ObjectForKey(UIApplication.LaunchOptionsRemoteNotificationKey);
+            if (message.ContainsKey(UIApplication.LaunchOptionsRemoteNotificationKey))
+                message = (NSDictionary)message.ObjectForKey(UIApplication.LaunchOptionsRemoteNotificationKey);
 
             // Check to see if the dictionary has the aps key.  
             // This is the notification payload you would have sent
-            if (userInfo.ContainsKey(new NSString("aps")))
+            if (message.ContainsKey(new NSString("aps")))
             {
                 //Get the aps dictionary
-                NSDictionary aps = userInfo.ObjectForKey(new NSString("aps")) as NSDictionary;
+                NSDictionary aps = message.ObjectForKey(new NSString("aps")) as NSDictionary;
                 if (aps != null)
                 {
                     //Extract the alert text
@@ -156,11 +80,11 @@ namespace AdMaiora.AppKit
                     // so keep that in mind.
                     if (aps.ContainsKey(new NSString("alert")))
                     {
-                        if(aps.ObjectForKey(new NSString("alert")) is NSString)
+                        if (aps.ObjectForKey(new NSString("alert")) is NSString)
                         {
                             var alert = aps.ObjectForKey(new NSString("alert")) as NSString;
-                            values.Add("title", null);
-                            values.Add("body", alert.ToString());
+                            notification.Add("title", null);
+                            notification.Add("body", alert.ToString());
                         }
                         else if (aps.ObjectForKey(new NSString("alert")) is NSDictionary)
                         {
@@ -168,10 +92,10 @@ namespace AdMaiora.AppKit
                             if (alert != null)
                             {
                                 if (alert.ContainsKey(new NSString("title")))
-                                    values.Add("title", alert.ObjectForKey(new NSString("title")).ToString());
+                                    notification.Add("title", alert.ObjectForKey(new NSString("title")).ToString());
 
                                 if (alert.ContainsKey(new NSString("body")))
-                                    values.Add("body", alert.ObjectForKey(new NSString("body")).ToString());
+                                    notification.Add("body", alert.ObjectForKey(new NSString("body")).ToString());
                             }
                         }
                     }
@@ -180,20 +104,20 @@ namespace AdMaiora.AppKit
 
             // Check to see if the dictionary has the data key.  
             // This is the custom payload you would have sent
-            if (userInfo.ContainsKey(new NSString("data")))
+            if (message.ContainsKey(new NSString("data")))
             {
                 //Get the data dictionary
-                NSDictionary data = userInfo.ObjectForKey(new NSString("data")) as NSDictionary;
+                NSDictionary data = message.ObjectForKey(new NSString("data")) as NSDictionary;
                 if (data != null)
                 {
-                    values.Add("action", (data.ObjectForKey(new NSString("action")) as NSNumber).Int32Value);
+                    notification.Add("action", (data.ObjectForKey(new NSString("action")) as NSNumber).Int32Value);
 
                     if (data.ContainsKey(new NSString("payload")))
                     {
                         if (data.ObjectForKey(new NSString("payload")) is NSString)
                         {
                             NSString payload = data.ObjectForKey(new NSString("payload")) as NSString;
-                            values.Add("payload", payload.ToString());
+                            notification.Add("payload", payload.ToString());
                         }
                         else if (data.ObjectForKey(new NSString("payload")) is NSDictionary)
                         {
@@ -203,7 +127,7 @@ namespace AdMaiora.AppKit
                                 NSError error = null;
                                 NSData d = NSJsonSerialization.Serialize(target, NSJsonWritingOptions.PrettyPrinted, out error);
                                 NSString json = NSString.FromData(d, NSStringEncoding.UTF8);
-                                values.Add("payload", json.ToString());
+                                notification.Add("payload", json.ToString());
                             }
                         }
                     }
@@ -211,11 +135,89 @@ namespace AdMaiora.AppKit
             }
             else
             {
-                values.Add("action", 0);
-                values.Add("payload", null);
+                notification.Add("action", 0);
+                notification.Add("payload", null);
             }
 
-            return values;
+            return notification;
+        }
+
+        #endregion
+    }
+
+    public abstract class UIAppKitApplicationDelegate : UIApplicationDelegate
+    {
+        #region Constants and Fields
+
+        private AppKitApnMessagingService _messagingService = new AppKitApnMessagingService();
+
+        #endregion
+
+        #region Properties
+
+        public override UIWindow Window
+        {
+            get;
+            set;
+        }
+
+        public bool IsApplicationInForeground
+        {
+            get
+            {
+                return this.Window != null 
+                    && UIApplication.SharedApplication.ApplicationState == UIApplicationState.Active;
+            }
+        }
+
+        #endregion
+
+        #region Application Methods
+
+        public override void ReceivedRemoteNotification(UIApplication application, NSDictionary userInfo)
+        {
+            PushNotificationData notification = AppKitApnMessagingService.GetNotificationData(userInfo);
+            ReceivedRemoteNotification(notification);
+        }
+
+        public virtual void ReceivedRemoteNotification(PushNotificationData data)
+        {
+
+        }
+
+        #endregion
+
+        #region Methods
+
+        protected bool RegisterMainLauncher(UIViewController mainViewController, NSDictionary launchOptions)
+        {
+            PushNotificationData notification = null;
+            if (!AppKitApnMessagingService.HandleStartUpNotification(launchOptions, out notification))             
+                PushNotificationManager.Current.StorePendingNotification(notification);
+
+            this.Window = new UIWindow(UIScreen.MainScreen.Bounds);
+            this.Window.RootViewController = mainViewController;
+            this.Window.MakeKeyAndVisible();
+
+            return true;
+        }
+
+        protected void RegisterForRemoteNotifications()
+        {
+            if (UIDevice.CurrentDevice.CheckSystemVersion(8, 0))
+            {
+                var pushSettings = UIUserNotificationSettings.GetSettingsForTypes(
+                       UIUserNotificationType.Alert | UIUserNotificationType.Badge | UIUserNotificationType.Sound,
+                       new NSSet());
+
+                UIApplication.SharedApplication.RegisterUserNotificationSettings(pushSettings);
+                UIApplication.SharedApplication.RegisterForRemoteNotifications();
+            }
+            else
+            {
+                UIRemoteNotificationType notificationTypes = UIRemoteNotificationType.Alert | UIRemoteNotificationType.Badge | UIRemoteNotificationType.Sound;
+                UIApplication.SharedApplication.RegisterForRemoteNotificationTypes(notificationTypes);
+            }
         }
 
         #endregion

@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>AdMaiora.AppKit.Core</AssemblyName>
-    <RootNamespace>AppKit</RootNamespace>
+    <RootNamespace>AdMaiora.AppKit</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

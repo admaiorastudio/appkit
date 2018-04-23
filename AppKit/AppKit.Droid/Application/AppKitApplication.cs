@@ -2,24 +2,170 @@ namespace AdMaiora.AppKit
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
 
     using Android.App;
     using Android.Content;
     using Android.OS;
     using Android.Runtime;
-    using Android.Gms.Common;    
-    using Android.Gms.Gcm;
-    using Android.Views;
-    using Android.Widget;
-    using Android.Gms.Iid;
+    using Android.Gms.Common;
+    using Android.Support.V4.App;
+    using Android.Media;
+
+    using Firebase.Iid;
+    using Firebase.Messaging;
+
+    using AdMaiora.AppKit.Data;
+    using AdMaiora.AppKit.Notifications;
+    using Firebase;
+
+    [Service]
+    [IntentFilter(new[] { "com.google.firebase.INSTANCE_ID_EVENT" })]
+    class AppKitFirebaseIdService : FirebaseInstanceIdService
+    {
+        #region Service Methods
+
+        public override void OnTokenRefresh()
+        {
+            string token = FirebaseInstanceId.Instance.Token;
+            AppKitApplication.Current?.OnRegisteredForRemoteNotifications(token);
+        }
+
+        #endregion
+    }
+
+    [Service]
+    [IntentFilter(new[] { "com.google.firebase.MESSAGING_EVENT" })]
+    class AppKitFirebaseMessagingService : FirebaseMessagingService
+    {
+        #region Constants and Fields
+
+        private static PushNotificationData _launchNotification;
+
+        #endregion
+
+        #region Helper Methods
+
+        public static bool HasStartUpNotification(out PushNotificationData launchNotification)
+        {
+            launchNotification = null;
+
+            if (_launchNotification == null)
+                return false;
+
+            launchNotification = _launchNotification;
+            _launchNotification = null;
+
+            return true;
+        }
+
+        public static PushNotificationData GetNotificationData(RemoteMessage message)
+        {
+            /*
+             * JSON Sample for notifications
+             * 
+             * 
+             * 
+                {
+                   "data": {
+                      "title": "",
+                      "body": "",
+                      "action": 0, // Default value 0 stands for plain message (title and body)
+                      "payload": { // Optional. A custom JSON payload to be used in conjunction with the action }
+                   }
+                }
+            *
+            */
+
+            if (message == null)
+                return null;
+
+            var data = new PushNotificationData();
+
+            data.Add("title", message.Data.ContainsKey("title") ? message.Data["title"] : null);
+            data.Add("body", message.Data.ContainsKey("body") ? message.Data["body"] : null);
+            data.Add("action", message.Data.ContainsKey("action") ? Int32.Parse(message.Data["action"]) : 0);
+            data.Add("payload", message.Data.ContainsKey("payload") ? message.Data["payload"] : null);
+
+            return data;
+        }
+
+        #endregion
+
+        #region Service Methods
+
+        public override void OnMessageReceived(RemoteMessage message)
+        {
+            if(AppKitApplication.Current == null
+                || !AppKitApplication.Current.IsApplicationInForeground)
+            {               
+                var data = GetNotificationData(message);
+                string title = (string)data["title"];
+                string text = (string)data["body"];
+
+                if(AppKitApplication.Current == null)
+                    _launchNotification = data;
+
+                Intent intent = new Intent();
+                intent.AddFlags(ActivityFlags.ReorderToFront);
+                intent.SetComponent(GetRootActivityComponentName());
+                PendingIntent pendingIntent = PendingIntent.GetActivity(this, 0, intent, PendingIntentFlags.UpdateCurrent);
+
+                var notificationBuilder = new NotificationCompat.Builder(this)
+                    .SetSmallIcon(GetSmallIconResourceId())
+                    .SetContentIntent(pendingIntent)
+                    .SetContentTitle(title)
+                    .SetContentText(text)                    
+                    .SetSound(RingtoneManager.GetDefaultUri(RingtoneType.Notification))
+                    .SetAutoCancel(true);
+
+                if (Build.VERSION.SdkInt >= BuildVersionCodes.Lollipop)
+                {
+                    notificationBuilder.SetDefaults(NotificationCompat.DefaultVibrate);
+                    notificationBuilder.SetPriority(NotificationCompat.PriorityDefault);
+                    notificationBuilder.SetVibrate(new long[] { 50, 50 });
+                }
+
+                var notificationManager = NotificationManager.FromContext(this);
+                notificationManager.Notify(0, notificationBuilder.Build());
+            }
+
+            AppKitApplication.Current?.OnReceivedRemoteNotification(message);
+        }
+
+        #endregion
+
+        #region Methods
+
+        private ComponentName GetRootActivityComponentName()
+        {
+            // Get the root activity of the task that your activity is running in
+            //ActivityManager am = (ActivityManager)Android.App.Application.Context.GetSystemService(Context.ActivityService);
+            //IList<ActivityManager.AppTask> tasks = am.AppTasks;
+            //ActivityManager.AppTask task = tasks[0];
+            //return task.TaskInfo.BaseActivity
+            string packageName = Application.Context.PackageName;
+            Intent intent = Application.Context.PackageManager.GetLaunchIntentForPackage(packageName);
+            return intent.Component;
+        }
+
+        private int GetSmallIconResourceId()
+        {
+            string packageName = Application.Context.PackageName;
+            int id = Application.Context.Resources.GetIdentifier("ic_notification", "drawable", packageName);    
+            if(id == -1)
+                return Application.Context.Resources.GetIdentifier("ic_launcher", "drawable", packageName);
+
+            return id;
+        }
+
+        #endregion
+    }
 
     public class AppKitApplication : Application
     {
         #region Inner Classes
 
-        class LifecycleManager : Java.Lang.Object, Android.App.Application.IActivityLifecycleCallbacks
+        public class LifecycleManager : Java.Lang.Object, Android.App.Application.IActivityLifecycleCallbacks
         {
             #region Constants and Fields
 
@@ -141,107 +287,23 @@ namespace AdMaiora.AppKit
             #endregion
         }
 
-        [Service(Exported = false)]
-        public class GcmRegistrationIntentService : IntentService
-        {
-            #region Constants and Fields
-
-            public static string GoogleGcmSenderID;
-            public static AppKitApplication Holder;
-
-            private static object _locker = new object();
-
-            #endregion
-
-            #region Constructors
-
-            public GcmRegistrationIntentService() 
-                : base("GcmRegistrationIntentService")
-            {
-            }
-
-            #endregion
-
-            #region Methods
-
-            protected override void OnHandleIntent(Intent intent)
-            {
-                try
-                {
-                    lock (_locker)
-                    {
-                        var instanceID = InstanceID.GetInstance(this);
-                        var token = instanceID.GetToken(
-                            GoogleGcmSenderID, GoogleCloudMessaging.InstanceIdScope, null);
-
-                        Subscribe(token);
-
-                        Holder.OnRegisteredForRemoteNotifications(instanceID, token);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Holder.OnFailedToRegisterForRemoteNotifications(ex);
-                }
-            }
-
-            private void Subscribe(string token)
-            {
-                var pubSub = GcmPubSub.GetInstance(this);
-                pubSub.Subscribe(token, "/topics/global", null);
-            }
-
-            #endregion
-        }
-
-        [Service(Exported = false), IntentFilter(new[] { "com.google.android.gms.iid.InstanceID" })]
-        public class GcmInstanceIDListenerService : InstanceIDListenerService
-        {
-            #region Methods
-
-            public override void OnTokenRefresh()
-            {
-                var intent = new Intent(this, typeof(GcmRegistrationIntentService));
-                StartService(intent);
-            }
-
-            #endregion
-        }
-
-        [Service(Exported = false), IntentFilter(new[] { "com.google.android.c2dm.intent.RECEIVE" })]
-        public class GcmListenerService : Android.Gms.Gcm.GcmListenerService
-        {
-            #region Constants and Fields
-
-            public static AppKitApplication Holder;
-
-            #endregion
-
-            #region Public Methods
-
-            public override void OnMessageReceived(string from, Bundle data)
-            {
-                Holder.OnReceivedRemoteNotification(from, data);
-            }
-
-            #endregion
-        }
-
         #endregion
 
-        #region Constants and Fields
+        #region Constants and Fields        
 
         private LifecycleManager _lfcb;
 
         #endregion
 
-        #region Constructors and Destructors
+        #region Constructors
 
         public AppKitApplication(IntPtr javaReference, JniHandleOwnership transfer)
             : base(javaReference, transfer)
         {
+            AppKitApplication.Current = this;           
+
             // Handle activities lifecycle
-            _lfcb = new AppKitApplication.LifecycleManager();            
+            _lfcb = new AppKitApplication.LifecycleManager();
             _lfcb.Resumed += App_Resumed;
             _lfcb.Paused += App_Paused;
 
@@ -251,6 +313,12 @@ namespace AdMaiora.AppKit
         #endregion
 
         #region Properties
+
+        public static AppKitApplication Current
+        {
+            get;
+            private set;
+        }
 
         public bool IsApplicationRunning
         {
@@ -272,21 +340,31 @@ namespace AdMaiora.AppKit
 
         #region Application Methods
 
-        public virtual void OnRegisteredForRemoteNotifications(InstanceID instanceID, string token)
-        {            
+        public override void OnCreate()
+        { 
+            base.OnCreate();
+
+            PushNotificationData notification = null;
+            if (AppKitFirebaseMessagingService.HasStartUpNotification(out notification))
+                PushNotificationManager.Current.StorePendingNotification(notification);
+        }
+
+        public virtual void OnRegisteredForRemoteNotifications(string token)
+        {
         }
 
         public virtual void OnFailedToRegisterForRemoteNotifications(Exception ex)
         {
         }
 
-        public virtual void OnReceivedRemoteNotification(string from, Bundle bundle)
+        public virtual void OnReceivedRemoteNotification(RemoteMessage message)
         {
-            OnReceivedRemoteNotification(GetNotificationData(bundle));
+            PushNotificationData notification = AppKitFirebaseMessagingService.GetNotificationData(message);
+            OnReceivedRemoteNotification(notification);
         }
 
-        public virtual void OnReceivedRemoteNotification(Dictionary<string, object> data)
-        {                        
+        public virtual void OnReceivedRemoteNotification(PushNotificationData data)
+        {
         }
 
         public virtual void OnResume()
@@ -301,57 +379,6 @@ namespace AdMaiora.AppKit
 
         #region Methods
 
-        protected void RegisterForRemoteNotifications(string googleGcmSenderId)
-        {
-            // Configure Push Notifications
-            int resultCode = GoogleApiAvailability.Instance.IsGooglePlayServicesAvailable(this.ApplicationContext);
-            if (resultCode == ConnectionResult.Success)
-            {
-                GcmRegistrationIntentService.GoogleGcmSenderID = googleGcmSenderId;
-                GcmRegistrationIntentService.Holder = this;
-
-                GcmListenerService.Holder = this;
-
-                var intent = new Intent(this, typeof(GcmRegistrationIntentService));
-                StartService(intent);
-            }
-            else
-            {
-                OnFailedToRegisterForRemoteNotifications(new GooglePlayServicesNotAvailableException(resultCode));
-            }
-        }
-
-        private Dictionary<string, object> GetNotificationData(Bundle bundle)
-        {
-            /*
-             * JSON Sample for notifications
-             * 
-             * 
-             * 
-                {
-                   "data":{
-                      "title": "",
-                      "body": "",
-                      "action": 0, // Default value 0 stands for plain message (title and body)
-                      "payload":{ // Optional. A custom JSON payload to be used in conjunction with the action }
-                   }
-                }
-            *
-            */
-
-            if (bundle == null)
-                return null;
-
-            var data = new Dictionary<string, object>();
-
-            data.Add("title", bundle.GetString("title"));
-            data.Add("body", bundle.GetString("body"));
-            data.Add("action", Int32.Parse(bundle.GetString("action", "0")));
-            data.Add("payload", bundle.GetString("payload"));
-
-            return data;
-        }
-
         protected override void Dispose(bool disposing)
         {
             base.Dispose(disposing);
@@ -362,6 +389,20 @@ namespace AdMaiora.AppKit
 
                 _lfcb.Resumed -= App_Resumed;
                 _lfcb.Paused -= App_Paused;
+            }
+        }
+
+        protected void RegisterForRemoteNotifications()
+        {
+            // Configure Push Notifications
+            int resultCode = GoogleApiAvailability.Instance.IsGooglePlayServicesAvailable(this.ApplicationContext);
+            if (resultCode == ConnectionResult.Success)
+            {
+                // Everything is fine!
+            }
+            else
+            {
+                OnFailedToRegisterForRemoteNotifications(new GooglePlayServicesNotAvailableException(resultCode));
             }
         }
 
