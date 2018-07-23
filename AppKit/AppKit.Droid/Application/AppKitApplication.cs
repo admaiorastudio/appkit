@@ -138,11 +138,6 @@ namespace AdMaiora.AppKit
 
         private ComponentName GetRootActivityComponentName()
         {
-            // Get the root activity of the task that your activity is running in
-            //ActivityManager am = (ActivityManager)Android.App.Application.Context.GetSystemService(Context.ActivityService);
-            //IList<ActivityManager.AppTask> tasks = am.AppTasks;
-            //ActivityManager.AppTask task = tasks[0];
-            //return task.TaskInfo.BaseActivity
             string packageName = Application.Context.PackageName;
             Intent intent = Application.Context.PackageManager.GetLaunchIntentForPackage(packageName);
             return intent.Component;
