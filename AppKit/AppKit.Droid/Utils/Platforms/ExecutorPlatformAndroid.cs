@@ -8,7 +8,8 @@ namespace AdMaiora.AppKit.Utils
     using Android.Content;
     using Android.OS;
 
-    using AdMaiora.AppKit.IO;    
+    using AdMaiora.AppKit.IO;
+    using Android.Support.V4.Content;
 
     public class ExecutorPlatformAndroid : IExecutorPlatform
     {
@@ -117,13 +118,17 @@ namespace AdMaiora.AppKit.Utils
             intent.SetType("message/rfc822");
             intent.PutExtra(Intent.ExtraEmail, toRecipients);
             intent.PutExtra(Intent.ExtraSubject, subject);
-            intent.PutExtra(Intent.ExtraText, text);
+            intent.PutExtra(Intent.ExtraText, ((Java.Lang.ICharSequence)new Java.Lang.String(text ?? String.Empty)));
 
             if (attachments != null
                 && attachments.Length > 0)
             {
                 var files = new List<Android.Net.Uri>();
-                files.AddRange(attachments.Select(a => a.ToUri()));
+                var context = Android.App.Application.Context;
+
+                files.AddRange(attachments.Select(x =>
+                    FileProvider.GetUriForFile(context, $"{context.PackageName}.fileprovider", new Java.IO.File(x.AbsolutePath))));
+
                 intent.PutParcelableArrayListExtra(Intent.ExtraStream, (IList<Android.OS.IParcelable>)files.ToArray());
             }
 

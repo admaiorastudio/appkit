@@ -8,6 +8,7 @@ namespace AdMaiora.AppKit
     using AdMaiora.AppKit.Notifications;
     using Foundation;
     using UIKit;
+    using UserNotifications;
 
     class AppKitApnMessagingService
     {
@@ -189,21 +190,19 @@ namespace AdMaiora.AppKit
 
         #region Methods
 
-        protected bool RegisterMainLauncher(UIViewController mainViewController, NSDictionary launchOptions)
-        {
-            PushNotificationData notification = null;
-            if (!AppKitApnMessagingService.HandleStartUpNotification(launchOptions, out notification))             
-                PushNotificationManager.Current.StorePendingNotification(notification);
-
-            this.Window = new UIWindow(UIScreen.MainScreen.Bounds);
-            this.Window.RootViewController = mainViewController;
-            this.Window.MakeKeyAndVisible();
-
-            return true;
-        }
-
         protected void RegisterForRemoteNotifications()
         {
+
+            if (UIDevice.CurrentDevice.CheckSystemVersion(10, 0))
+            {
+                UNUserNotificationCenter.Current.RequestAuthorization(
+                    UNAuthorizationOptions.Alert | UNAuthorizationOptions.Sound | UNAuthorizationOptions.Sound,
+                    (granted, error) =>
+                    {
+                        if (granted)
+                            InvokeOnMainThread(UIApplication.SharedApplication.RegisterForRemoteNotifications);
+                    });
+            }
             if (UIDevice.CurrentDevice.CheckSystemVersion(8, 0))
             {
                 var pushSettings = UIUserNotificationSettings.GetSettingsForTypes(
@@ -218,6 +217,19 @@ namespace AdMaiora.AppKit
                 UIRemoteNotificationType notificationTypes = UIRemoteNotificationType.Alert | UIRemoteNotificationType.Badge | UIRemoteNotificationType.Sound;
                 UIApplication.SharedApplication.RegisterForRemoteNotificationTypes(notificationTypes);
             }
+        }
+
+        protected bool RegisterMainLauncher(UIViewController mainViewController, NSDictionary launchOptions)
+        {
+            PushNotificationData notification = null;
+            if (!AppKitApnMessagingService.HandleStartUpNotification(launchOptions, out notification))
+                PushNotificationManager.Current.StorePendingNotification(notification);
+
+            this.Window = new UIWindow(UIScreen.MainScreen.Bounds);
+            this.Window.RootViewController = mainViewController;
+            this.Window.MakeKeyAndVisible();
+
+            return true;
         }
 
         #endregion

@@ -1,17 +1,17 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26430.4
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28729.10
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "0.Kit.Core", "0.Kit.Core", "{99B5B2AD-3FE0-42EC-86C2-0ACA4B3F8E13}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "1.Kit.Platforms", "1.Kit.Platforms", "{90206B8C-FF47-4321-9299-598EFB88FF37}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AppKit.Core", "AppKit\AppKit\AppKit.Core.csproj", "{20ACECC9-A41D-4901-8F97-89BDDBDE3762}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppKit.Droid", "AppKit\AppKit.Droid\AppKit.Droid.csproj", "{947A46B7-A144-4744-8D27-EBAB63688907}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AppKit.iOS", "AppKit\AppKit.iOS\AppKit.iOS.csproj", "{E2F22A89-5591-4419-B104-78050160ED2F}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AppKit.Core", "AppKit\AppKit\AppKit.Core.csproj", "{20ACECC9-A41D-4901-8F97-89BDDBDE3762}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -26,6 +26,24 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{20ACECC9-A41D-4901-8F97-89BDDBDE3762}.AppStore|Any CPU.ActiveCfg = Debug|Any CPU
+		{20ACECC9-A41D-4901-8F97-89BDDBDE3762}.AppStore|Any CPU.Build.0 = Debug|Any CPU
+		{20ACECC9-A41D-4901-8F97-89BDDBDE3762}.AppStore|ARM.ActiveCfg = Debug|Any CPU
+		{20ACECC9-A41D-4901-8F97-89BDDBDE3762}.AppStore|ARM.Build.0 = Debug|Any CPU
+		{20ACECC9-A41D-4901-8F97-89BDDBDE3762}.AppStore|x86.ActiveCfg = Debug|Any CPU
+		{20ACECC9-A41D-4901-8F97-89BDDBDE3762}.AppStore|x86.Build.0 = Debug|Any CPU
+		{20ACECC9-A41D-4901-8F97-89BDDBDE3762}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{20ACECC9-A41D-4901-8F97-89BDDBDE3762}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{20ACECC9-A41D-4901-8F97-89BDDBDE3762}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{20ACECC9-A41D-4901-8F97-89BDDBDE3762}.Debug|ARM.Build.0 = Debug|Any CPU
+		{20ACECC9-A41D-4901-8F97-89BDDBDE3762}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{20ACECC9-A41D-4901-8F97-89BDDBDE3762}.Debug|x86.Build.0 = Debug|Any CPU
+		{20ACECC9-A41D-4901-8F97-89BDDBDE3762}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{20ACECC9-A41D-4901-8F97-89BDDBDE3762}.Release|Any CPU.Build.0 = Release|Any CPU
+		{20ACECC9-A41D-4901-8F97-89BDDBDE3762}.Release|ARM.ActiveCfg = Release|Any CPU
+		{20ACECC9-A41D-4901-8F97-89BDDBDE3762}.Release|ARM.Build.0 = Release|Any CPU
+		{20ACECC9-A41D-4901-8F97-89BDDBDE3762}.Release|x86.ActiveCfg = Release|Any CPU
+		{20ACECC9-A41D-4901-8F97-89BDDBDE3762}.Release|x86.Build.0 = Release|Any CPU
 		{947A46B7-A144-4744-8D27-EBAB63688907}.AppStore|Any CPU.ActiveCfg = Release|Any CPU
 		{947A46B7-A144-4744-8D27-EBAB63688907}.AppStore|Any CPU.Build.0 = Release|Any CPU
 		{947A46B7-A144-4744-8D27-EBAB63688907}.AppStore|ARM.ActiveCfg = Release|Any CPU
@@ -62,32 +80,14 @@ Global
 		{E2F22A89-5591-4419-B104-78050160ED2F}.Release|ARM.Build.0 = Release|Any CPU
 		{E2F22A89-5591-4419-B104-78050160ED2F}.Release|x86.ActiveCfg = Release|Any CPU
 		{E2F22A89-5591-4419-B104-78050160ED2F}.Release|x86.Build.0 = Release|Any CPU
-		{20ACECC9-A41D-4901-8F97-89BDDBDE3762}.AppStore|Any CPU.ActiveCfg = Debug|Any CPU
-		{20ACECC9-A41D-4901-8F97-89BDDBDE3762}.AppStore|Any CPU.Build.0 = Debug|Any CPU
-		{20ACECC9-A41D-4901-8F97-89BDDBDE3762}.AppStore|ARM.ActiveCfg = Debug|Any CPU
-		{20ACECC9-A41D-4901-8F97-89BDDBDE3762}.AppStore|ARM.Build.0 = Debug|Any CPU
-		{20ACECC9-A41D-4901-8F97-89BDDBDE3762}.AppStore|x86.ActiveCfg = Debug|Any CPU
-		{20ACECC9-A41D-4901-8F97-89BDDBDE3762}.AppStore|x86.Build.0 = Debug|Any CPU
-		{20ACECC9-A41D-4901-8F97-89BDDBDE3762}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{20ACECC9-A41D-4901-8F97-89BDDBDE3762}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{20ACECC9-A41D-4901-8F97-89BDDBDE3762}.Debug|ARM.ActiveCfg = Debug|Any CPU
-		{20ACECC9-A41D-4901-8F97-89BDDBDE3762}.Debug|ARM.Build.0 = Debug|Any CPU
-		{20ACECC9-A41D-4901-8F97-89BDDBDE3762}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{20ACECC9-A41D-4901-8F97-89BDDBDE3762}.Debug|x86.Build.0 = Debug|Any CPU
-		{20ACECC9-A41D-4901-8F97-89BDDBDE3762}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{20ACECC9-A41D-4901-8F97-89BDDBDE3762}.Release|Any CPU.Build.0 = Release|Any CPU
-		{20ACECC9-A41D-4901-8F97-89BDDBDE3762}.Release|ARM.ActiveCfg = Release|Any CPU
-		{20ACECC9-A41D-4901-8F97-89BDDBDE3762}.Release|ARM.Build.0 = Release|Any CPU
-		{20ACECC9-A41D-4901-8F97-89BDDBDE3762}.Release|x86.ActiveCfg = Release|Any CPU
-		{20ACECC9-A41D-4901-8F97-89BDDBDE3762}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{20ACECC9-A41D-4901-8F97-89BDDBDE3762} = {99B5B2AD-3FE0-42EC-86C2-0ACA4B3F8E13}
 		{947A46B7-A144-4744-8D27-EBAB63688907} = {90206B8C-FF47-4321-9299-598EFB88FF37}
 		{E2F22A89-5591-4419-B104-78050160ED2F} = {90206B8C-FF47-4321-9299-598EFB88FF37}
-		{20ACECC9-A41D-4901-8F97-89BDDBDE3762} = {99B5B2AD-3FE0-42EC-86C2-0ACA4B3F8E13}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A3CA7102-B238-4AEA-A378-96DA2B33A43E}

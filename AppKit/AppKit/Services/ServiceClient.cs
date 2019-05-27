@@ -10,6 +10,7 @@
     using System.Diagnostics;
 
     using RestSharp;
+    using AdMaiora.AppKit.Services.Serialization;
 
     public enum ParametersHandling
     {
@@ -24,7 +25,11 @@
         /// <summary>
         /// This means multipart/form-data, this allow file uploads BUT you can send form parameters only
         /// </summary>
-        MultipartFormData
+        MultipartFormData,
+        /// <summary>
+        /// This means multipart/form-data, this allow file uploads BUT you can send json body only
+        /// </summary>
+        MultipartJsonData
     }
 
     public class TrackedRestRequest
@@ -124,6 +129,9 @@
 
         #region Properties
 
+        /// <summary>
+        /// Base URL of the rest api you want to consume
+        /// </summary>
         public string BaseUrl
         {
             get
@@ -146,6 +154,9 @@
             }
         }
 
+        /// <summary>
+        /// Request time out in milliseconds
+        /// </summary>
         public int RequestTimeout
         {
             get
@@ -155,10 +166,13 @@
             set
             {
                 // No less then 5 seconds
-                _requestTimeout = Math.Max(value, 5);
+                _requestTimeout = Math.Max(value, 5000);
             }
         }
 
+        /// <summary>
+        /// Oauth access token value (include type)
+        /// </summary>
         public string AccessToken
         {
             get
@@ -171,6 +185,9 @@
             }
         }
 
+        /// <summary>
+        /// Oauth access token header name (used when REST api is not fully compliant)
+        /// </summary>
         public string AccessTokenName
         {
             get
@@ -410,12 +427,19 @@
             RestClient client = new RestClient(this.BaseUrl);            
             client.Timeout = _requestTimeout;
 
+            client.AddHandler("application/json", () => NewtonsoftJsonSerializer.Default);
+            client.AddHandler("text/json", () => NewtonsoftJsonSerializer.Default);
+            client.AddHandler("text/x-json", () => NewtonsoftJsonSerializer.Default);
+            client.AddHandler("text/javascript", () => NewtonsoftJsonSerializer.Default);
+            client.AddHandler("*+json", () => NewtonsoftJsonSerializer.Default);
+
             return client;
         }
 
         public RestRequest GetRestRequest(string resource, Method method, ParametersHandling ph = ParametersHandling.Default, object parameters = null)
         {
             RestRequest request = new RestRequest(resource, method);
+            request.JsonSerializer = NewtonsoftJsonSerializer.Default;
             request.RequestFormat = this.DataFormat;
 
             if (this.IsAccessTokenValid)
@@ -461,7 +485,20 @@
                         request.AddParameter(_multipartJsonField, parameters, "application/json", ParameterType.RequestBody);
 
                     break;
-            }     
+
+                case ParametersHandling.MultipartJsonData:
+
+                    // We do not specify any any content type header
+                    // letting RestSharp decide what to use
+
+                    // We add parameters as a single object parameter
+                    // letting RestSharp to do the right JSON serialization
+                    if (parameters != null)
+                        request.AddJsonBody(parameters);
+
+                    break;
+
+            }
 
             return request;
         }

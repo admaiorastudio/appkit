@@ -125,8 +125,22 @@ namespace AdMaiora.AppKit
                     notificationBuilder.SetVibrate(new long[] { 50, 50 });
                 }
 
-                var notificationManager = NotificationManager.FromContext(this);
-                notificationManager.Notify(0, notificationBuilder.Build());
+                string channelID = "PushMainChannel";
+                if(Build.VERSION.SdkInt >= BuildVersionCodes.O)
+                {                    
+                    NotificationChannel channel = new NotificationChannel(channelID, "PushMainChannel", NotificationImportance.High);
+                    notificationBuilder.SetChannelId(channelID);
+
+                    var notificationManager = NotificationManager.FromContext(this);
+                    notificationManager.CreateNotificationChannel(channel);
+                    notificationManager.Notify(0, notificationBuilder.Build());
+                }
+                else
+                {
+                    var notificationManager = NotificationManager.FromContext(this);
+                    notificationManager.Notify(0, notificationBuilder.Build());
+                }
+                
             }
 
             AppKitApplication.Current?.OnReceivedRemoteNotification(message);
@@ -146,9 +160,16 @@ namespace AdMaiora.AppKit
         private int GetSmallIconResourceId()
         {
             string packageName = Application.Context.PackageName;
-            int id = Application.Context.Resources.GetIdentifier("ic_notification", "drawable", packageName);    
-            if(id == -1)
-                return Application.Context.Resources.GetIdentifier("ic_launcher", "drawable", packageName);
+
+            int id = -1;
+            string[] names = { "icon_push", "ic_push", "ic_notification", "ic_launcher", "icon" };
+
+            foreach (string name in names)
+            {
+                id = Application.Context.Resources.GetIdentifier(name, "drawable", packageName);
+                if (id != -1)
+                    return id;
+            }
 
             return id;
         }
